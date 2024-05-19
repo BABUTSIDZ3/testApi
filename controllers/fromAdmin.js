@@ -191,7 +191,7 @@ fromAdminRouter.post("/add-question", async (req, res) => {
       return res
         .status(400)
         .send(
-          "There are already 50 active questions in the database. No more questions can be added."
+          "უკვე დამატებულია 50 კითხვა"
         );
     }
 
