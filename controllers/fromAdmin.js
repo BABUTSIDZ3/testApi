@@ -242,8 +242,8 @@ fromAdminRouter.post("/stop-game", async (req, res) => {
   }else{
     const stopGameQuerry = `UPDATE admin SET started_game =? WHERE id=?`;
   const deactivateQuestionsQuerry = `UPDATE questions SET active =? WHERE active=?`;
-  const usersQuerry = `UPDATE users SET health=?, health_with_money=?, health_with_coin=?, help_with_money=?, help_with_coin=?, x1_25_coin=?, x1_5_coin=?, x2_coin=?, x_card_with_coin=?, x_card_with_money=?`;
-  await queryDatabase(usersQuerry, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  const usersQuerry = `UPDATE users SET health=?, health_with_money=?, health_with_coin=?, help_with_money=?, help_with_coin=?, x1_25_coin=?, x1_5_coin=?, x2_coin=?, x_card_with_coin=?, x_card_with_money=?,help=?`;
+  await queryDatabase(usersQuerry, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0]);
   await queryDatabase(stopGameQuerry, [0, 1]);
   await queryDatabase(deactivateQuestionsQuerry, [0, 1]);
   res.send("stopped successfully");
