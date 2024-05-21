@@ -267,9 +267,6 @@ fromAdminRouter.post("/start-game", async (req, res) => {
         [1]
       );
       const totalUsers = usersWhichExchangingMoney.length;
-      if (totalUsers === 0) {
-        return res.send("არცერთი მომხმარებელი არ ცვლის თანხას");
-      }
 
       // Only distribute amount if it is greater than 0
       if (amount_to_be_distributed > 0) {
@@ -281,7 +278,9 @@ fromAdminRouter.post("/start-game", async (req, res) => {
           await updateUserBalance(user.id, updatedCoin);
         }
       }
-
+   if (totalUsers === 0) {
+        return res.send("არცერთი მომხმარებელი არ ცვლის თანხას");
+      }
       // Other queries remain the same
       const userQuery = `UPDATE users SET health = health+?, help = help+?, coin = ?, seenquestions = ?, exchanging_to_money = ?`;
       const startGameQuery = `UPDATE admin SET started_game = ? WHERE id = ?`;
