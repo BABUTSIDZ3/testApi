@@ -232,17 +232,34 @@ fromAdminRouter.post("/add-question", async (req, res) => {
 });
 
 fromAdminRouter.post("/stop-game", async (req, res) => {
-  const stopGameQuerry = `UPDATE admin SET started_game =? WHERE id=?`;
+  const gameIsStartedQuery = `SELECT started_game FROM admin`;
+  // Execute the query to get the game status
+  const [gameStatusRow] = await queryDatabase(gameIsStartedQuery);
+  // Extract the game status from the query result
+  const gameStatus = gameStatusRow.started_game;
+  if(gameStatus==0){
+    res.send('თამაში უკვე დასტოპებულია')
+  }else{
+    const stopGameQuerry = `UPDATE admin SET started_game =? WHERE id=?`;
   const deactivateQuestionsQuerry = `UPDATE questions SET active =? WHERE active=?`;
   const usersQuerry = `UPDATE users SET health=?, health_with_money=?, health_with_coin=?, help_with_money=?, help_with_coin=?, x1_25_coin=?, x1_5_coin=?, x2_coin=?, x_card_with_coin=?, x_card_with_money=?`;
   await queryDatabase(usersQuerry, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
   await queryDatabase(stopGameQuerry, [0, 1]);
   await queryDatabase(deactivateQuestionsQuerry, [0, 1]);
   res.send("stopped successfully");
+  }
 });
 
 fromAdminRouter.post("/start-game", async (req, res) => {
-  const { amount_to_be_distributed } = req.body;
+ const gameIsStartedQuery = `SELECT started_game FROM admin`;
+ // Execute the query to get the game status
+ const [gameStatusRow] = await queryDatabase(gameIsStartedQuery);
+ // Extract the game status from the query result
+ const gameStatus = gameStatusRow.started_game;
+ if (gameStatus == 1) {
+   res.send("თამაში უკვე დაწყებულია");
+ }else{
+   const { amount_to_be_distributed } = req.body;
   try {
     const usersWhichExchangingMoneyQuery = `SELECT balance,id FROM users WHERE exchanging_to_money = ?`;
     const usersWhichExchangingMoney = await queryDatabase(
@@ -278,6 +295,7 @@ fromAdminRouter.post("/start-game", async (req, res) => {
     console.error(error.message);
     res.status(500).send("Internal Server Error");
   }
+ }
 });
 
 // Function to update user balance
@@ -329,7 +347,7 @@ fromAdminRouter.post("/withdraw", async (req, res) => {
 
   // Check if user has enough balance to withdraw
   if (userBalanceNumber < amount) {
-    return res.status(400).send("Insufficient balance.");
+    return res.status(400).send("მომხმარებელს არ აქვს საკმარისი თანხა ბალანსზე");
   }
 
   // Perform withdrawal
