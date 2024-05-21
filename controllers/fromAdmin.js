@@ -268,7 +268,7 @@ fromAdminRouter.post("/start-game", async (req, res) => {
     );
     const totalUsers = usersWhichExchangingMoney.length;
     if (totalUsers === 0) {
-      return res.status(400).send("არცერთი მომხმარებელი არ ცვლის თანხას");
+      return res.send("არცერთი მომხმარებელი არ ცვლის თანხას");
     }
 
     const amountPerUser = amount_to_be_distributed / totalUsers;
