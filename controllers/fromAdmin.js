@@ -4,12 +4,12 @@ import cron from "node-cron";
 
 const fromAdminRouter = express.Router();
 
-fromAdminRouter.post('/gift-cards',async (req,res)=>{
-  const {email}=req.body
+fromAdminRouter.post("/gift-cards", async (req, res) => {
+  const { email } = req.body;
   const updateQuerry = `UPDATE users SET gift_card_id=0 WHERE email=?`;
-  await queryDatabase(updateQuerry,[email])
-  res.send('succesfully updated');
-})
+  await queryDatabase(updateQuerry, [email]);
+  res.send("succesfully updated");
+});
 
 fromAdminRouter.get("/gift-cards", async (req, res) => {
   const getUsersInfoQuery = `SELECT u.gift_card_id, u.email, m.product_name 
@@ -161,52 +161,19 @@ fromAdminRouter.post("/registration", async (req, res) => {
 });
 
 fromAdminRouter.post("/add-question", async (req, res) => {
-  const {
-    question_GE,
-    question_EN,
-    answer_1_GE,
-    answer_2_GE,
-    answer_3_GE,
-    answer_4_GE,
-    answer_1_EN,
-    answer_2_EN,
-    answer_3_EN,
-    answer_4_EN,
-    right_answer_GE,
-    right_answer_EN,
-  } = req.body;
-  const insertQuestionQuery = `INSERT INTO questions (question_GE,question_EN, right_answer_GE,right_answer_EN) VALUES (?, ?,?,?)`;
-  const insertAnswersQuery = `INSERT INTO answers (question_id, answer_1_GE, answer_2_GE, answer_3_GE, answer_4_GE,answer_1_EN, answer_2_EN, answer_3_EN, answer_4_EN) VALUES (?, ?, ?, ?, ?,?,?,?,?)`;
-  const countActiveQuestionsQuery = `SELECT COUNT(*) AS activeQuestionCount FROM questions WHERE active = 1`;
-  try {
-    // Check the count of active questions
-    const activeQuestionCountResult = await queryDatabase(
-      countActiveQuestionsQuery
+  const gameIsStartedQuery = `SELECT started_game FROM admin`;
+  // Execute the query to get the game status
+  const [gameStatusRow] = await queryDatabase(gameIsStartedQuery);
+  // Extract the game status from the query result
+  const gameStatus = gameStatusRow.started_game;
+  if (gameStatus == 1) {
+    res.send(
+      "თამაშის მიმდინარეობის დროს არ შეგიძლია კითხვების დამატება, დაასტოპე თამაში"
     );
-    const activeQuestionCount =
-      activeQuestionCountResult[0].activeQuestionCount;
-
-    // If the count is 50, return a message indicating no more questions can be added
-    if (activeQuestionCount >= 50) {
-      return res
-        .status(400)
-        .send(
-          "უკვე დამატებულია 50 კითხვა"
-        );
-    }
-
-    // Insert question
-    const questionResult = await queryDatabase(insertQuestionQuery, [
+  } else {
+    const {
       question_GE,
       question_EN,
-      right_answer_GE,
-      right_answer_EN,
-    ]);
-    const questionId = questionResult.insertId;
-
-    // Insert answers
-    await queryDatabase(insertAnswersQuery, [
-      questionId,
       answer_1_GE,
       answer_2_GE,
       answer_3_GE,
@@ -215,15 +182,54 @@ fromAdminRouter.post("/add-question", async (req, res) => {
       answer_2_EN,
       answer_3_EN,
       answer_4_EN,
-    ]);
+      right_answer_GE,
+      right_answer_EN,
+    } = req.body;
+    const insertQuestionQuery = `INSERT INTO questions (question_GE,question_EN, right_answer_GE,right_answer_EN) VALUES (?, ?,?,?)`;
+    const insertAnswersQuery = `INSERT INTO answers (question_id, answer_1_GE, answer_2_GE, answer_3_GE, answer_4_GE,answer_1_EN, answer_2_EN, answer_3_EN, answer_4_EN) VALUES (?, ?, ?, ?, ?,?,?,?,?)`;
+    const countActiveQuestionsQuery = `SELECT COUNT(*) AS activeQuestionCount FROM questions WHERE active = 1`;
+    try {
+      // Check the count of active questions
+      const activeQuestionCountResult = await queryDatabase(
+        countActiveQuestionsQuery
+      );
+      const activeQuestionCount =
+        activeQuestionCountResult[0].activeQuestionCount;
 
-    res.status(200).send("Question added successfully");
-  } catch (error) {
-    console.error("Error executing SQL query:", error);
-    res.status(500).send("An error occurred while adding the question.");
+      // If the count is 50, return a message indicating no more questions can be added
+      if (activeQuestionCount >= 50) {
+        return res.status(400).send("უკვე დამატებულია 50 კითხვა");
+      }
+
+      // Insert question
+      const questionResult = await queryDatabase(insertQuestionQuery, [
+        question_GE,
+        question_EN,
+        right_answer_GE,
+        right_answer_EN,
+      ]);
+      const questionId = questionResult.insertId;
+
+      // Insert answers
+      await queryDatabase(insertAnswersQuery, [
+        questionId,
+        answer_1_GE,
+        answer_2_GE,
+        answer_3_GE,
+        answer_4_GE,
+        answer_1_EN,
+        answer_2_EN,
+        answer_3_EN,
+        answer_4_EN,
+      ]);
+
+      res.status(200).send("Question added successfully");
+    } catch (error) {
+      console.error("Error executing SQL query:", error);
+      res.status(500).send("An error occurred while adding the question.");
+    }
   }
 });
-
 
 fromAdminRouter.post("/stop-game", async (req, res) => {
   const stopGameQuerry = `UPDATE admin SET started_game =? WHERE id=?`;
@@ -234,7 +240,6 @@ fromAdminRouter.post("/stop-game", async (req, res) => {
   await queryDatabase(deactivateQuestionsQuerry, [0, 1]);
   res.send("stopped successfully");
 });
-
 
 fromAdminRouter.post("/start-game", async (req, res) => {
   const { amount_to_be_distributed } = req.body;
