@@ -249,57 +249,63 @@ fromAdminRouter.post("/stop-game", async (req, res) => {
   res.send("stopped successfully");
   }
 });
+
 fromAdminRouter.post("/start-game", async (req, res) => {
-  const gameIsStartedQuery = `SELECT started_game FROM admin`;
-  // Execute the query to get the game status
-  const [gameStatusRow] = await queryDatabase(gameIsStartedQuery);
-  // Extract the game status from the query result
-  const gameStatus = gameStatusRow.started_game;
+ const gameIsStartedQuery = `SELECT started_game FROM admin`;
+ // Execute the query to get the game status
+ const [gameStatusRow] = await queryDatabase(gameIsStartedQuery);
+ // Extract the game status from the query result
+ const gameStatus = gameStatusRow.started_game;
+ if (gameStatus == 1) {
+   res.send("თამაში უკვე დაწყებულია");
+ }else{
+   const { amount_to_be_distributed } = req.body;
+  try {
+    // Other queries remain the same
+    const userQuery = `UPDATE users SET health = health+?, help = help+?, coin = ?, seenquestions = ?, exchanging_to_money = ?`;
+    const startGameQuery = `UPDATE admin SET started_game = ? WHERE id = ?`;
+    const deleteQuestionsQuery = `DELETE FROM questions WHERE active = ?`;
+    const deleteAnswersQuery = `DELETE FROM answers WHERE question_id IN (SELECT id FROM questions WHERE active = ?)`;
 
-  if (gameStatus == 1) {
-    res.send("თამაში უკვე დაწყებულია");
-  } else {
-    const { amount_to_be_distributed } = req.body;
-    try {
-      const usersWhichExchangingMoneyQuery = `SELECT balance,id FROM users WHERE exchanging_to_money = ?`;
-      const usersWhichExchangingMoney = await queryDatabase(
-        usersWhichExchangingMoneyQuery,
-        [1]
-      );
-      const totalUsers = usersWhichExchangingMoney.length;
-
-      // Only distribute amount if it is greater than 0
-      if (amount_to_be_distributed > 0) {
-        const amountPerUser = amount_to_be_distributed / totalUsers;
-
-        // Update balance for each user exchanging money
-        for (const user of usersWhichExchangingMoney) {
-          const updatedCoin = user.balance + amountPerUser;
-          await updateUserBalance(user.id, updatedCoin);
-        }
-      }
-   if (totalUsers === 0) {
-        return res.send("არცერთი მომხმარებელი არ ცვლის თანხას");
-      }
-      // Other queries remain the same
-      const userQuery = `UPDATE users SET health = health+?, help = help+?, coin = ?, seenquestions = ?, exchanging_to_money = ?`;
-      const startGameQuery = `UPDATE admin SET started_game = ? WHERE id = ?`;
-      const deleteQuestionsQuery = `DELETE FROM questions WHERE active = ?`;
-      const deleteAnswersQuery = `DELETE FROM answers WHERE question_id IN (SELECT id FROM questions WHERE active = ?)`;
-
+    const usersWhichExchangingMoneyQuery = `SELECT balance,id FROM users WHERE exchanging_to_money = ?`;
+    const usersWhichExchangingMoney = await queryDatabase(
+      usersWhichExchangingMoneyQuery,
+      [1]
+    );
+    if (amount_to_be_distributed == 0) {
       await queryDatabase(userQuery, [3, 3, 0, '"', 0]);
       await queryDatabase(deleteAnswersQuery, [0]);
       await queryDatabase(deleteQuestionsQuery, [0]);
       await queryDatabase(startGameQuery, [1, 1]);
 
-      res.send("Game started successfully");
-    } catch (error) {
-      console.error(error.message);
-      res.status(500).send("Internal Server Error");
+      return res.send("Game started successfully");
     }
-  }
-});
 
+    const totalUsers = usersWhichExchangingMoney.length;
+    if (totalUsers === 0) {
+      return res.send("არცერთი მომხმარებელი არ ცვლის თანხას");
+    }
+
+    const amountPerUser = amount_to_be_distributed / totalUsers;
+
+    // Update balance for each user exchanging money
+    for (const user of usersWhichExchangingMoney) {
+      const updatedCoin = user.balance + amountPerUser;
+      await updateUserBalance(user.id, updatedCoin);
+    }
+
+    await queryDatabase(userQuery, [3, 3, 0, '"', 0]);
+    await queryDatabase(deleteAnswersQuery, [0]);
+    await queryDatabase(deleteQuestionsQuery, [0]);
+    await queryDatabase(startGameQuery, [1, 1]);
+
+    res.send("Game started successfully");
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send("Internal Server Error");
+  }
+ }
+});
 
 // Function to update user balance
 async function updateUserBalance(userId, newBalance) {
