@@ -260,7 +260,7 @@ fromAdminRouter.post("/start-game", async (req, res) => {
    res.send("თამაში უკვე დაწყებულია");
  }else{
    const { amount_to_be_distributed } = req.body;
-  try {
+  try { 
     // Other queries remain the same
     const userQuery = `UPDATE users SET health = health+?, help = help+?, coin = ?, seenquestions = ?, exchanging_to_money = ?`;
     const startGameQuery = `UPDATE admin SET started_game = ? WHERE id = ?`;
