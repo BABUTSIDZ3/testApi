@@ -2,138 +2,86 @@ import express from "express";
 import { queryDatabase } from "../utils/functions.js";
 
 const questionsRouter = express.Router();
+
 questionsRouter.get("/active", async (req, res) => {
-  try {
-    // Check if the game is started
-    const gameIsStartedQuery = `SELECT started_game FROM admin`;
-    const [gameStatus] = await queryDatabase(gameIsStartedQuery);
+  const gameIsStartedQuery = `SELECT started_game FROM admin`;
+  const [gameStatus] = await queryDatabase(gameIsStartedQuery);
 
-    if (!gameStatus) {
-      throw new Error("Failed to retrieve game status");
-    }
+  if (gameStatus.started_game == 1) {
+    try {
+      const { user_id, usingHelp, language } = req.body;
+      const getUserHelpQuery = `SELECT help FROM users WHERE id = ?`;
+      const [userHelpResult] = await queryDatabase(getUserHelpQuery, [user_id]);
 
-    if (gameStatus.started_game == 1) {
-      try {
-        const { userid, usingHelp, language } = req.body;
-
-        // Check user help points
-        const getUserHelpQuery = `SELECT help FROM users WHERE id = ?`;
-        const [userHelpResult] = await queryDatabase(getUserHelpQuery, [
-          userid,
-        ]);
-
-        if (!userHelpResult) {
-          throw new Error("Failed to retrieve user help points");
-        }
-
-        if (usingHelp == 1 && userHelpResult.help < 1) {
-          res
-            .status(403)
-            .send("You don't have enough help points to use help.");
-          return;
-        }
-
-        // Fetch active questions
-        const getActiveQuestionQuery = `SELECT question_${language}, active, id FROM questions WHERE active = ?`;
-        const activeQuestions = await queryDatabase(getActiveQuestionQuery, [
-          1,
-        ]);
-
-        if (!activeQuestions) {
-          throw new Error("Failed to retrieve active questions");
-        }
-
-        // Fetch seen questions by the user
-        const getUserInfoQuery = `SELECT seenquestions FROM users WHERE id = ?`;
-        const seenQuestionsResult = await queryDatabase(getUserInfoQuery, [
-          userid,
-        ]);
-
-        if (!seenQuestionsResult) {
-          throw new Error("Failed to retrieve user information");
-        }
-
-        const userSeenQuestions =
-          seenQuestionsResult.length > 0
-            ? seenQuestionsResult[0].seenquestions.split(",")
-            : [];
-
-        // Filter unseen questions
-        const filteredQuestions = activeQuestions.filter(
-          (question) => !userSeenQuestions.includes(question.id.toString())
-        );
-
-        if (filteredQuestions.length === 0) {
-          res.send("You have seen all the questions.");
-          return;
-        }
-
-        // Select a random question
-        const randomQuestion =
-          filteredQuestions[
-            Math.floor(Math.random() * filteredQuestions.length)
-          ];
-
-        // Update user seen questions
-        const updateUserSeenQuestionsQuery = `UPDATE users SET seenquestions = ? WHERE id = ?`;
-        const updatedSeenQuestions = userSeenQuestions.concat(
-          randomQuestion.id
-        );
-        await queryDatabase(updateUserSeenQuestionsQuery, [
-          updatedSeenQuestions.join(","),
-          userid,
-        ]);
-
-        // Fetch answers based on whether help is used
-        let answers;
-        if (usingHelp == 1) {
-          const getHelpfulAnswersQuery = `SELECT answer_1_${language}, answer_2_${language} FROM answers WHERE question_id = ?`;
-          answers = await queryDatabase(getHelpfulAnswersQuery, [
-            randomQuestion.id,
-          ]);
-
-          if (!answers) {
-            throw new Error("Failed to retrieve helpful answers");
-          }
-
-          const userUpdateQuery = `UPDATE users SET help = help - 1 WHERE id = ?`;
-          await queryDatabase(userUpdateQuery, [userid]);
-
-          // Extract answers from objects to an array of strings
-          answers = answers.map((answer) => Object.values(answer)[0]);
-        } else {
-          const getAnswersQuery = `SELECT answer_1_${language}, answer_2_${language}, answer_3_${language}, answer_4_${language} FROM answers WHERE question_id = ?`;
-          answers = await queryDatabase(getAnswersQuery, [randomQuestion.id]);
-
-          if (!answers) {
-            throw new Error("Failed to retrieve answers");
-          }
-
-          // Extract answers from objects to an array of strings
-          answers = answers[0] ? Object.values(answers[0]) : [];
-        }
-
-        // Shuffle the answers array
-        answers = shuffleArray(answers);
-
-        // Send the response with the question and answers
-        res.send({
-          question: randomQuestion[`question_${language}`],
-          answers: answers,
-        });
-      } catch (error) {
-        console.error("Error:", error);
-        res.status(500).send("Internal Server Error");
+      if (usingHelp == 1 && userHelpResult.help < 1) {
+        res.status(403).send("You don't have enough help points to use help.");
+        return;
       }
-    } else {
-      res.send("The game is paused and will resume soon");
+
+      const getActiveQuestionQuery = `SELECT question_${language}, active, id FROM questions WHERE active = ?`;
+      const activeQuestions = await queryDatabase(getActiveQuestionQuery, [1]);
+
+      const getUserInfoQuery = `SELECT seenquestions FROM users WHERE id = ?`;
+      const seenQuestionsResult = await queryDatabase(getUserInfoQuery, [
+        user_id,
+      ]);
+      const userSeenQuestions =
+        seenQuestionsResult.length > 0
+          ? seenQuestionsResult[0].seenquestions.split(",")
+          : [];
+
+      const filteredQuestions = activeQuestions.filter(
+        (question) => !userSeenQuestions.includes(question.id.toString())
+      );
+      if (filteredQuestions.length === 0) {
+        res.send("You have seen all the questions.");
+        return;
+      }
+      const randomQuestion =
+        filteredQuestions[Math.floor(Math.random() * filteredQuestions.length)];
+      const updateUserSeenQuestionsQuery = `UPDATE users SET seenquestions = ? WHERE id = ?`;
+      const updatedSeenQuestions = userSeenQuestions.concat(randomQuestion.id);
+      await queryDatabase(updateUserSeenQuestionsQuery, [
+        updatedSeenQuestions.join(","),
+        user_id,
+      ]);
+      let answers;
+      if (usingHelp == 1) {
+        const getHelpfulAnswersQuery = `SELECT answer_1_${language}, answer_2_${language} FROM answers WHERE question_id = ?`;
+        const userUpdateQuerry = `UPDATE users SET help = help - 1 WHERE id = ?`;
+        answers = await queryDatabase(getHelpfulAnswersQuery, [
+          randomQuestion.id,
+        ]);
+        await queryDatabase(userUpdateQuerry, [user_id]);
+
+        // Extract answers from objects to an array of strings
+        answers = answers.map((answer) => Object.values(answer)[0]);
+      } else {
+        const getAnswersQuery = `SELECT answer_1_${language}, answer_2_${language}, answer_3_${language}, answer_4_${language} FROM answers WHERE question_id = ?`;
+        answers = await queryDatabase(getAnswersQuery, [randomQuestion.id]);
+
+        // Extract answers from objects to an array of strings
+        answers = answers[0] ? Object.values(answers[0]) : [];
+      }
+
+      // Shuffle the answers array
+      answers = shuffleArray(answers);
+
+      res.send({
+        question:
+          language == "GE"
+            ? randomQuestion.question_GE
+            : randomQuestion.question_EN,
+        answers: answers,
+      });
+    } catch (error) {
+      console.error("Error:", error);
+      res.status(500).send("Internal Server Error");
     }
-  } catch (error) {
-    console.error("Error:", error);
-    res.status(500).send("Internal Server Error");
+  } else {
+    res.send("The game is paused and will resume soon");
   }
 });
-
 
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
