@@ -3,7 +3,7 @@ import { queryDatabase } from "../utils/functions.js";
 
 const questionsRouter = express.Router();
 
-questionsRouter.get("/active", async (req, res) => {
+questionsRouter.post("/active", async (req, res) => {
   const gameIsStartedQuery = `SELECT started_game FROM admin`;
   const [gameStatus] = await queryDatabase(gameIsStartedQuery);
 
