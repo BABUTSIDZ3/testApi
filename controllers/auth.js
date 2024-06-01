@@ -11,7 +11,7 @@ const authRouter = express.Router();
 authRouter.post("/register", async (req, res) => {
   try {
     // Destructure request body
-    const { username, password, email, avatar } = req.body;
+    let { username, password, email, avatar } = req.body;
     if (avatar == 1) {
       avatar =
         "https://photos.google.com/u/2/photo/AF1QipOGYCB4npjaJLPuJQqAqEJKsKH7KyrCxyBDeubS";
