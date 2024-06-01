@@ -3,7 +3,7 @@ import { queryDatabase } from "../utils/functions.js";
 
 const usersRouter = express.Router();
 
-usersRouter.delete('/delete-seen-questions',async(req,res)=>{
+usersRouter.post('/delete-seen-questions',async(req,res)=>{
   const {email}=req.body
   const updatequerry = `UPDATE users SET seenquestions=? WHERE email=?`;
   await queryDatabase(updatequerry, ['"', email]);
