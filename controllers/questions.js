@@ -2,7 +2,6 @@ import express from "express";
 import { queryDatabase } from "../utils/functions.js";
 
 const questionsRouter = express.Router();
-
 questionsRouter.post("/active", async (req, res) => {
   const gameIsStartedQuery = `SELECT started_game FROM admin`;
   const [gameStatus] = await queryDatabase(gameIsStartedQuery);
@@ -48,11 +47,11 @@ questionsRouter.post("/active", async (req, res) => {
       let answers;
       if (usingHelp == 1) {
         const getHelpfulAnswersQuery = `SELECT answer_1_${language}, answer_2_${language} FROM answers WHERE question_id = ?`;
-        const userUpdateQuerry = `UPDATE users SET help = help - 1 WHERE id = ?`;
+        const userUpdateQuery = `UPDATE users SET help = help - 1 WHERE id = ?`;
         answers = await queryDatabase(getHelpfulAnswersQuery, [
           randomQuestion.id,
         ]);
-        await queryDatabase(userUpdateQuerry, [user_id]);
+        await queryDatabase(userUpdateQuery, [user_id]);
 
         // Extract answers from objects to an array of strings
         answers = answers.map((answer) => Object.values(answer)[0]);
@@ -72,6 +71,7 @@ questionsRouter.post("/active", async (req, res) => {
           language == "GE"
             ? randomQuestion.question_GE
             : randomQuestion.question_EN,
+        question_id: randomQuestion.id,
         answers: answers,
       });
     } catch (error) {
@@ -82,6 +82,7 @@ questionsRouter.post("/active", async (req, res) => {
     res.send("The game is paused and will resume soon");
   }
 });
+
 
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
