@@ -9,6 +9,18 @@ questionsRouter.post("/active", async (req, res) => {
   if (gameStatus.started_game == 1) {
     try {
       const { user_id, usingHelp, language } = req.body;
+
+      // Retrieve the user's health from the database
+      const getUserHealthQuery = `SELECT health FROM users WHERE id = ?`;
+      const [userHealthResult] = await queryDatabase(getUserHealthQuery, [
+        user_id,
+      ]);
+
+      if (userHealthResult.health < 1) {
+        res.status(403).send("Your health is too low to perform any actions.");
+        return;
+      }
+
       const getUserHelpQuery = `SELECT help FROM users WHERE id = ?`;
       const [userHelpResult] = await queryDatabase(getUserHelpQuery, [user_id]);
 
@@ -24,6 +36,7 @@ questionsRouter.post("/active", async (req, res) => {
       const seenQuestionsResult = await queryDatabase(getUserInfoQuery, [
         user_id,
       ]);
+
       const userSeenQuestions =
         seenQuestionsResult.length > 0
           ? seenQuestionsResult[0].seenquestions.split(",")
@@ -32,18 +45,22 @@ questionsRouter.post("/active", async (req, res) => {
       const filteredQuestions = activeQuestions.filter(
         (question) => !userSeenQuestions.includes(question.id.toString())
       );
+
       if (filteredQuestions.length === 0) {
         res.send("You have seen all the questions.");
         return;
       }
+
       const randomQuestion =
         filteredQuestions[Math.floor(Math.random() * filteredQuestions.length)];
+
       const updateUserSeenQuestionsQuery = `UPDATE users SET seenquestions = ? WHERE id = ?`;
       const updatedSeenQuestions = userSeenQuestions.concat(randomQuestion.id);
       await queryDatabase(updateUserSeenQuestionsQuery, [
         updatedSeenQuestions.join(","),
         user_id,
       ]);
+
       let answers;
       if (usingHelp == 1) {
         const getHelpfulAnswersQuery = `SELECT answer_1_${language}, answer_2_${language} FROM answers WHERE question_id = ?`;
@@ -96,6 +113,7 @@ questionsRouter.post("/answer", async (req, res) => {
   const { question_id, answer, time, user_id, use_x, language } = req.body;
   const questionQuerry = `SELECT right_answer_${language} FROM questions WHERE id = ?`;
   const coinAddQuerry = `UPDATE users SET coin = coin + ? WHERE id = ?`;
+  const incorrectAnswerQuerry=`UPDATE users SET health = health-1 WHERE id = ?`;
   const question = await queryDatabase(questionQuerry, [question_id]);
   let coinToAdd;
   if (use_x === 0) {
@@ -121,6 +139,7 @@ questionsRouter.post("/answer", async (req, res) => {
     res.send("Your answer is correct");
     await queryDatabase(coinAddQuerry, [coinToAdd, user_id]);
   } else {
+await queryDatabase(incorrectAnswerQuerry,[user_id]);
     res.send("Your answer is not correct");
   }
 });
