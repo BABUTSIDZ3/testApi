@@ -116,16 +116,16 @@ questionsRouter.post("/answer", async (req, res) => {
   const incorrectAnswerQuerry=`UPDATE users SET health = health-1 WHERE id = ?`;
   const question = await queryDatabase(questionQuerry, [question_id]);
   let coinToAdd;
-  if (use_x === 0) {
+  if (use_x == 0) {
     coinToAdd = time;
   } else {
     coinToAdd = time * use_x;
     let coinColumn;
-    if (use_x === 1.25) {
+    if (use_x == "x1_25_coin") {
       coinColumn = "x1_25_coin";
-    } else if (use_x === 1.5) {
+    } else if (use_x == "x1_5_coin") {
       coinColumn = "x1_5_coin";
-    } else if (use_x === 2) {
+    } else if (use_x == "x2_coin") {
       coinColumn = "x2_coin";
     }
     const subtractCoinQuerry = `UPDATE users SET ${coinColumn} = ${coinColumn} - 1 WHERE id = ?`;
