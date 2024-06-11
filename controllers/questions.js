@@ -2,6 +2,7 @@ import express from "express";
 import { queryDatabase } from "../utils/functions.js";
 
 const questionsRouter = express.Router();
+
 questionsRouter.post("/active", async (req, res) => {
   const gameIsStartedQuery = `SELECT started_game FROM admin`;
   const [gameStatus] = await queryDatabase(gameIsStartedQuery);
@@ -29,18 +30,17 @@ questionsRouter.post("/active", async (req, res) => {
         return;
       }
 
+      // Retrieve the active question
       const getActiveQuestionQuery = `SELECT question_${language}, active, id FROM questions WHERE active = ?`;
       const activeQuestions = await queryDatabase(getActiveQuestionQuery, [1]);
 
-      const getUserInfoQuery = `SELECT seenquestions FROM users WHERE id = ?`;
-      const seenQuestionsResult = await queryDatabase(getUserInfoQuery, [
-        user_id,
-      ]);
+      // Retrieve the seen questions for the user
+      const getUserInfoQuery = `SELECT seenquestions, x1_25_coin, x1_5_coin, x2_coin FROM users WHERE id = ?`;
+      const [userInfoResult] = await queryDatabase(getUserInfoQuery, [user_id]);
 
-      const userSeenQuestions =
-        seenQuestionsResult.length > 0
-          ? seenQuestionsResult[0].seenquestions.split(",")
-          : [];
+      const userSeenQuestions = userInfoResult.seenquestions
+        ? userInfoResult.seenquestions.split(",")
+        : [];
 
       const filteredQuestions = activeQuestions.filter(
         (question) => !userSeenQuestions.includes(question.id.toString())
@@ -54,6 +54,7 @@ questionsRouter.post("/active", async (req, res) => {
       const randomQuestion =
         filteredQuestions[Math.floor(Math.random() * filteredQuestions.length)];
 
+      // Update the seen questions for the user
       const updateUserSeenQuestionsQuery = `UPDATE users SET seenquestions = ? WHERE id = ?`;
       const updatedSeenQuestions = userSeenQuestions.concat(randomQuestion.id);
       await queryDatabase(updateUserSeenQuestionsQuery, [
@@ -83,6 +84,12 @@ questionsRouter.post("/active", async (req, res) => {
       // Shuffle the answers array
       answers = shuffleArray(answers);
 
+      // Prepare avaialbe_x_coins array
+      const availableCoins = [];
+      if (userInfoResult.x1_25_coin > 0) availableCoins.push("x1_25_coin");
+      if (userInfoResult.x1_5_coin > 0) availableCoins.push("x1_5_coin");
+      if (userInfoResult.x2_coin > 0) availableCoins.push("x2_coin");
+
       res.send({
         question:
           language == "GE"
@@ -90,6 +97,7 @@ questionsRouter.post("/active", async (req, res) => {
             : randomQuestion.question_EN,
         question_id: randomQuestion.id,
         answers: answers,
+        avaialbe_x_coins: availableCoins,
       });
     } catch (error) {
       console.error("Error:", error);
@@ -99,6 +107,14 @@ questionsRouter.post("/active", async (req, res) => {
     res.send("The game is paused and will resume soon");
   }
 });
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
 
 
 function shuffleArray(array) {
