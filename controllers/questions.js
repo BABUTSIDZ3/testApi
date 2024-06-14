@@ -31,7 +31,7 @@ questionsRouter.post("/active", async (req, res) => {
       }
 
       // Retrieve the active question
-      const getActiveQuestionQuery = `SELECT question_${language}, active, id FROM questions WHERE active = ?`;
+      const getActiveQuestionQuery = `SELECT question_${language}, active, id,right_answer_${language} FROM questions WHERE active = ?`;
       const activeQuestions = await queryDatabase(getActiveQuestionQuery, [1]);
 
       // Retrieve the seen questions for the user
@@ -62,52 +62,54 @@ questionsRouter.post("/active", async (req, res) => {
         user_id,
       ]);
 
-      let answers;
+      let answers = [];
       if (usingHelp == 1) {
-        // Retrieve all answers for the question
+        const rightAnswer =
+          randomQuestion.right_answer_GE || randomQuestion.right_answer_EN;
+        answers.push(rightAnswer);
         const getHelpfulAnswersQuery = `SELECT answer_1_${language}, answer_2_${language}, answer_3_${language}, answer_4_${language} FROM answers WHERE question_id = ?`;
-        const allAnswers = await queryDatabase(getHelpfulAnswersQuery, [
-          randomQuestion.id,
-        ]);
-
-        if (allAnswers.length > 0) {
-          // Extract answers from the result
-          const answersArray = Object.values(allAnswers[0]);
-
-          // Assume the first answer is the correct one
-          const correctAnswer = answersArray[0];
-          const incorrectAnswers = answersArray
-            .slice(1)
-            .filter((answer) => answer);
-
-          // Pick a random incorrect answer
-          const randomIncorrect =
-            incorrectAnswers[
-              Math.floor(Math.random() * incorrectAnswers.length)
-            ];
-
-          // Set answers to include one correct and one random incorrect answer
-          answers = [correctAnswer, randomIncorrect];
-        }
-
-        // Deduct one help point from the user
         const userUpdateQuery = `UPDATE users SET help = help - 1 WHERE id = ?`;
-        await queryDatabase(userUpdateQuery, [user_id]);
-      } else {
-        // Retrieve all answers for the question
-        const getAnswersQuery = `SELECT answer_1_${language}, answer_2_${language}, answer_3_${language}, answer_4_${language} FROM answers WHERE question_id = ?`;
-        const answersResult = await queryDatabase(getAnswersQuery, [
+        const answersForAnswers = await queryDatabase(getHelpfulAnswersQuery, [
           randomQuestion.id,
         ]);
 
-        // Extract answers from the result
-        answers = answersResult[0] ? Object.values(answersResult[0]) : [];
+        function removeFour(arr) {
+          return arr.map((obj) => {
+            let newObj = {};
+            for (let key in obj) {
+              if (obj[key] !== rightAnswer) {
+                newObj[key] = obj[key];
+              }
+            }
+            return newObj;
+          });
+        }
+        const updatedAnswers = removeFour(answersForAnswers);
+        function getRandomValue(arr) {
+          if (arr.length === 0) return null;
+
+          const obj = arr[0];
+          const values = Object.values(obj);
+          const randomIndex = Math.floor(Math.random() * values.length);
+          return values[randomIndex];
+        }
+        const randomValue = getRandomValue(updatedAnswers);
+
+        await queryDatabase(userUpdateQuery, [user_id]);
+
+        answers.push(randomValue);
+      } else {
+        const getAnswersQuery = `SELECT answer_1_${language}, answer_2_${language}, answer_3_${language}, answer_4_${language} FROM answers WHERE question_id = ?`;
+        answers = await queryDatabase(getAnswersQuery, [randomQuestion.id]);
+
+        // Extract answers from objects to an array of strings
+        answers = answers[0] ? Object.values(answers[0]) : [];
       }
 
       // Shuffle the answers array
       answers = shuffleArray(answers);
 
-      // Prepare available_x_coins array
+      // Prepare avaialbe_x_coins array
       const availableCoins = [];
       if (userInfoResult.x1_25_coin > 0) availableCoins.push("x1_25_coin");
       if (userInfoResult.x1_5_coin > 0) availableCoins.push("x1_5_coin");
@@ -120,7 +122,7 @@ questionsRouter.post("/active", async (req, res) => {
             : randomQuestion.question_EN,
         question_id: randomQuestion.id,
         answers: answers,
-        available_x_coins: availableCoins,
+        avaialbe_x_coins: availableCoins,
       });
     } catch (error) {
       console.error("Error:", error);
@@ -132,22 +134,18 @@ questionsRouter.post("/active", async (req, res) => {
 });
 
 function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i++) {
+  for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
   return array;
 }
 
-
-
-
-
 questionsRouter.post("/answer", async (req, res) => {
   const { question_id, answer, time, user_id, use_x, language } = req.body;
   const questionQuerry = `SELECT right_answer_${language} FROM questions WHERE id = ?`;
   const coinAddQuerry = `UPDATE users SET coin = coin + ? WHERE id = ?`;
-  const incorrectAnswerQuerry=`UPDATE users SET health = health-1 WHERE id = ?`;
+  const incorrectAnswerQuerry = `UPDATE users SET health = health-1 WHERE id = ?`;
   const question = await queryDatabase(questionQuerry, [question_id]);
   let coinToAdd;
   if (use_x == 0) {
@@ -173,7 +171,7 @@ questionsRouter.post("/answer", async (req, res) => {
     res.send("Your answer is correct");
     await queryDatabase(coinAddQuerry, [coinToAdd, user_id]);
   } else {
-await queryDatabase(incorrectAnswerQuerry,[user_id]);
+    await queryDatabase(incorrectAnswerQuerry, [user_id]);
     res.send("Your answer is not correct");
   }
 });

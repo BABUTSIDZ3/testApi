@@ -16,8 +16,8 @@ export const conection = mariadb.createPool({
   password: "AnPehD1d6Jih1Tw7NzMn",
   database: "bqohr8a7iumyappvkudf",
   port: "3306",
-  connectionLimit: 100, // Increased limit for handling higher concurrency
-  connectTimeout: 100000
+  connectionLimit: 10000, // Increased limit for handling higher concurrency
+  connectTimeout: 10000000
 });
 
 const app = express();
