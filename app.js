@@ -8,6 +8,7 @@ import questionsRouter from "./controllers/questions.js";
 import resultsRouter from "./controllers/results.js";
 import fromAdminRouter from "./controllers/fromAdmin.js";
 import marketRouter from "./controllers/market.js";
+import faqRouter from "./controllers/faq.js";
 
 
 export const conection = mariadb.createPool({
@@ -29,6 +30,7 @@ app.use("/api/questions", questionsRouter);
 app.use("/api/results", resultsRouter);
 app.use("/api/admin", fromAdminRouter);
 app.use("/api/market", marketRouter);
+app.use("/api/faq", faqRouter);
 
 app.listen(3000, () => {
   console.log(`started on port ${PORT}`);
