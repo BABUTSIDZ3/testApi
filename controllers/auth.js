@@ -152,8 +152,7 @@ authRouter.put("/register/verify", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
-
-////////////USER LOGIN/////////////////
+///////////USER LOGIN/////////////////
 authRouter.post("/login", async (req, res) => {
   try {
     // Destructure request body
@@ -161,7 +160,7 @@ authRouter.post("/login", async (req, res) => {
 
     // Find user in the database by username or email
     const findUserQuery = `
-      SELECT token,username,password FROM users 
+      SELECT token, username, password, payment_status FROM users
       WHERE username = ? OR email = ?`;
     const result = await queryDatabase(findUserQuery, [
       usernameOrEmail,
@@ -169,7 +168,12 @@ authRouter.post("/login", async (req, res) => {
     ]);
 
     if (result.length) {
-      // Check if password is correct
+      // Check if the payment_status is 1
+      if (result[0].payment_status !== 1) {
+        return res.status(403).send("Payment status not valid");
+      }
+
+      // Check if the password is correct
       const passwordCorrect = await bcrypt.compare(
         password,
         result[0]?.password
@@ -195,6 +199,7 @@ authRouter.post("/login", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
+
 
 ////////////FORGOT PASSWORD/////////////////
 authRouter.post("/forgotpassword", async (req, res) => {
