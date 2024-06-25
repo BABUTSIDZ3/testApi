@@ -170,7 +170,7 @@ authRouter.post("/login", async (req, res) => {
     if (result.length) {
       // Check if the payment_status is 1
       if (result[0].payment_status !== 1) {
-        return res.status(403).send("Payment status not valid");
+        return res.send(false);
       }
 
       // Check if the password is correct
