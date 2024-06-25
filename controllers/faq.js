@@ -1,5 +1,5 @@
 import express from 'express'
-import { queryDatabase } from '../utils/functions'
+import { queryDatabase } from '../utils/functions.js'
 
 const faqRouter=express.Router()
 
