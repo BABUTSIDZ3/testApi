@@ -87,7 +87,21 @@ authRouter.post("/register/verify", async (req, res) => {
         from: "goldenstrategy777@gmail.com",
         to: email,
         subject: "verify your email",
-        text: `Your verification number is: ${randomVerificationNumber}`,
+        html: `
+                    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                        <h2 style="color: #0056b3;">Password Reset Verification</h2>
+                        <p>Hello,</p>
+                        <p>We received a request to reset your password. Please use the verification number below to proceed:</p>
+                        <div style="padding: 10px; background-color: #f2f2f2; text-align: center; border-radius: 5px; margin: 20px 0;">
+                            <span style="font-size: 24px; font-weight: bold;">${randomVerificationNumber}</span>
+                        </div>
+                        <p>If you did not request a password reset, please ignore this email.</p>
+                        <p>Thank you,</p>
+                        <p>The Golden Strategy Team</p>
+                        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                        <p style="font-size: 12px; color: #999;">This email was sent to ${email}. If you did not request this, please contact our support.</p>
+                    </div>
+                `,
       };
       // Update the verification number in the database
       const updateQuery = `UPDATE users SET verificationnumber = ? WHERE email = ?`;
@@ -212,7 +226,21 @@ authRouter.post("/forgotpassword", async (req, res) => {
         from: "goldenstrategy777@gmail.com",
         to: email,
         subject: "verify your email",
-        text: `Your verification number is: ${randomVerificationNumber}`,
+        html: `
+                    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                        <h2 style="color: #0056b3;">Password Reset Verification</h2>
+                        <p>Hello,</p>
+                        <p>We received a request to reset your password. Please use the verification number below to proceed:</p>
+                        <div style="padding: 10px; background-color: #f2f2f2; text-align: center; border-radius: 5px; margin: 20px 0;">
+                            <span style="font-size: 24px; font-weight: bold;">${randomVerificationNumber}</span>
+                        </div>
+                        <p>If you did not request a password reset, please ignore this email.</p>
+                        <p>Thank you,</p>
+                        <p>The Golden Strategy Team</p>
+                        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                        <p style="font-size: 12px; color: #999;">This email was sent to ${email}. If you did not request this, please contact our support.</p>
+                    </div>
+                `,
       };
 
       await transporter.sendMail(mailOptions);
