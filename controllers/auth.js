@@ -79,12 +79,12 @@ authRouter.post("/register/verify", async (req, res) => {
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
-          user: "babutsidze2003gia@gmail.com",
-          pass: "fdbj faiu pdff zkxv",
+          user: "goldenstrategy777@gmail.com",
+          pass: "ztoe uasj dgby ekay",
         },
       });
       const mailOptions = {
-        from: "babutsidze2003gia@gmail.com",
+        from: "goldenstrategy777@gmail.com",
         to: email,
         subject: "verify your email",
         text: `Your verification number is: ${randomVerificationNumber}`,
@@ -204,12 +204,12 @@ authRouter.post("/forgotpassword", async (req, res) => {
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
-          user: "babutsidze2003gia@gmail.com",
-          pass: "fdbj faiu pdff zkxv",
+          user: "goldenstrategy777@gmail.com",
+          pass: "ztoe uasj dgby ekay",
         },
       });
       const mailOptions = {
-        from: "babutsidze2003gia@gmail.com",
+        from: "goldenstrategy777@gmail.com",
         to: email,
         subject: "verify your email",
         text: `Your verification number is: ${randomVerificationNumber}`,
