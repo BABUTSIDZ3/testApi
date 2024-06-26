@@ -197,7 +197,7 @@ authRouter.post("/login", async (req, res) => {
         const updateTokenQuery = `UPDATE users SET token = ? WHERE username = ?`;
         await queryDatabase(updateTokenQuery, [token, result[0].username]);
 
-        res.json(token:token);
+        res.json({token:token});
       } else {
         res.status(401).send("Username/email or password is incorrect");
       }
