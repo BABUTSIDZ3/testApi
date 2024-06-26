@@ -168,10 +168,8 @@ authRouter.post("/login", async (req, res) => {
     ]);
 
     if (result.length) {
-      // Check if the payment_status is 1
-      if (result[0].payment_status !== 1) {
-        return res.send(false);
-      }
+      
+     
 
       // Check if the password is correct
       const passwordCorrect = await bcrypt.compare(
@@ -186,8 +184,11 @@ authRouter.post("/login", async (req, res) => {
         // Update user token in the database
         const updateTokenQuery = `UPDATE users SET token = ? WHERE username = ?`;
         await queryDatabase(updateTokenQuery, [token, result[0].username]);
-
-        res.json(token);
+const response = {
+  token: token,
+  payment_status_active: result[0]?.payment_status,
+};
+        res.json(response);
       } else {
         res.status(401).send("Username/email or password is incorrect");
       }

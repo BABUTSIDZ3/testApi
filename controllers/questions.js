@@ -17,7 +17,7 @@ questionsRouter.post("/active", async (req, res) => {
         user_id,
       ]);
 
-      if (userHealthResult.health < 1) {
+      if (userHealthResult?.health < 1) {
         res.status(403).send("Your health is too low to perform any actions.");
         return;
       }
