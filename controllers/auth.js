@@ -157,7 +157,7 @@ authRouter.post("/login", async (req, res) => {
   try {
     const { usernameOrEmail, password } = req.body;
     const findUserQuery = `
-      SELECT id, token, verified, username, password, payment_status, email FROM users
+      SELECT id, token, verifyed, username, password, payment_status, email FROM users
       WHERE username = ? OR email = ?`;
     const result = await queryDatabase(findUserQuery, [
       usernameOrEmail,
