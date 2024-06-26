@@ -169,13 +169,14 @@ authRouter.post("/login", async (req, res) => {
 
     if (result.length) {
       // Check if the payment_status is 1
-      if (result[0].payment_status !== 1) {
-        return res.send("payment status is not valid");
-      }
+     
 
        if (result[0].verifyed == null) {
          return res.send("you are not verifyed");
        }
+        if (result[0].payment_status !== 1) {
+        return res.send("payment status is not valid");
+      }
 
       // Check if the password is correct
       const passwordCorrect = await bcrypt.compare(
