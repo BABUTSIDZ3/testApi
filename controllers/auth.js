@@ -152,6 +152,7 @@ authRouter.put("/register/verify", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
+
 ///////////USER LOGIN/////////////////
 authRouter.post("/login", async (req, res) => {
   try {
@@ -172,10 +173,14 @@ authRouter.post("/login", async (req, res) => {
      
 
        if (result[0].verifyed == null) {
-         return res.send("you are not verifyed");
+
+         return res.send({
+           status: "you are not verifyed",
+           token: result[0].token,
+         });
        }
         if (result[0].payment_status !== 1) {
-        return res.send("payment status is not valid");
+        return res.send({status:"payment status is not valid",token:result[0].token});
       }
 
       // Check if the password is correct
