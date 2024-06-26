@@ -61,26 +61,22 @@ authRouter.post("/register", async (req, res) => {
   }
 });
 
-////////////VERIFY AFTER REGISTRATION//////////////////////
+
+// Verify After Registration
 authRouter.post("/register/verify", async (req, res) => {
   try {
-    // Destructure request body
     const { email } = req.body;
-    // Create nodemailer transporter
-
-    // Find user in the database
     const findUserQuery = `SELECT id FROM users WHERE email = ?`;
     const result = await queryDatabase(findUserQuery, [email]);
 
-    if (result[0]) {
-      // Generate a random verification number
+    if (result.length) {
       const randomVerificationNumber =
         Math.floor(100000 + Math.random() * 900000) + result[0].id.toString();
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
           user: "goldenstrategy777@gmail.com",
-          pass: "ztoe uasj dgby ekay",
+          pass: "your_email_password",
         },
       });
       const mailOptions = {
@@ -88,35 +84,32 @@ authRouter.post("/register/verify", async (req, res) => {
         to: email,
         subject: "verify your email",
         html: `
-                    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                        <h2 style="color: #0056b3;">Password Reset Verification</h2>
-                        <p>Hello,</p>
-                        <p>We received a request to reset your password. Please use the verification number below to proceed:</p>
-                        <div style="padding: 10px; background-color: #f2f2f2; text-align: center; border-radius: 5px; margin: 20px 0;">
-                            <span style="font-size: 24px; font-weight: bold;">${randomVerificationNumber}</span>
-                        </div>
-                        <p>If you did not request a password reset, please ignore this email.</p>
-                        <p>Thank you,</p>
-                        <p>The Golden Strategy Team</p>
-                        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                        <p style="font-size: 12px; color: #999;">This email was sent to ${email}. If you did not request this, please contact our support.</p>
-                    </div>
-                `,
+          <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <h2 style="color: #0056b3;">Email Verification</h2>
+            <p>Hello,</p>
+            <p>Please use the verification number below to verify your email address:</p>
+            <div style="padding: 10px; background-color: #f2f2f2; text-align: center; border-radius: 5px; margin: 20px 0;">
+              <span style="font-size: 24px; font-weight: bold;">${randomVerificationNumber}</span>
+            </div>
+            <p>If you did not request this, please ignore this email.</p>
+            <p>Thank you,</p>
+            <p>The Golden Strategy Team</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="font-size: 12px; color: #999;">This email was sent to ${email}. If you did not request this, please contact our support.</p>
+          </div>
+        `,
       };
-      // Update the verification number in the database
       const updateQuery = `UPDATE users SET verificationnumber = ? WHERE email = ?`;
       const timeoutQuery = `UPDATE users SET verificationnumber = NULL WHERE email = ?`;
       await queryDatabase(updateQuery, [randomVerificationNumber, email]);
-      try {
-        // Send email with the verification number
 
+      try {
         await transporter.sendMail(mailOptions);
         res.send("email sent successfully");
       } catch (error) {
-        res.send("Email not sent");
+        res.status(500).send("Email not sent");
       }
 
-      // Set a timeout to clear the verification number after 2 minutes
       setTimeout(async () => {
         await queryDatabase(timeoutQuery, [email]);
       }, 120000);
@@ -129,21 +122,17 @@ authRouter.post("/register/verify", async (req, res) => {
   }
 });
 
+// Verify with Code
 authRouter.put("/register/verify", async (req, res) => {
   try {
-    // Destructure request body
     const { verificationnumber } = req.body;
-
-    // Check if the verification number exists in the database
     const findUserQuery = `SELECT id FROM users WHERE verificationnumber = ?`;
     const result = await queryDatabase(findUserQuery, [verificationnumber]);
 
-    if (result[0]) {
-      // Update the user to set verified=true and clear the verification number
-      const updateQuery = `UPDATE users SET verifyed = ?, verificationnumber = ? WHERE verificationnumber = ?`;
-      await queryDatabase(updateQuery, ["true", null, verificationnumber]);
-
-      res.send("verifyed_success");
+    if (result.length) {
+      const updateQuery = `UPDATE users SET verified = true, verificationnumber = NULL WHERE id = ?`;
+      await queryDatabase(updateQuery, [result[0].id]);
+      res.send("verified_success");
     } else {
       res.status(404).send("Incorrect verification code");
     }
@@ -152,38 +141,32 @@ authRouter.put("/register/verify", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
-///////////USER LOGIN/////////////////
+
+// Login
 authRouter.post("/login", async (req, res) => {
   try {
-    // Destructure request body
     const { usernameOrEmail, password } = req.body;
-
-    // Find user in the database by username or email
     const findUserQuery = `
-      SELECT token,verifyed, username, password, payment_status FROM users
+      SELECT id, token, verified, username, password, payment_status, email FROM users
       WHERE username = ? OR email = ?`;
-    const result = await queryDatabase(findUserQuery, [
-      usernameOrEmail,
-      usernameOrEmail,
-    ]);
+    const result = await queryDatabase(findUserQuery, [usernameOrEmail, usernameOrEmail]);
 
     if (result.length) {
+      const user = result[0];
+      if (!user.verified) {
+        return res.json({ status: "you are not verified", token: user.token, email: user.email });
+      }
 
-      // Check if the password is correct
-      const passwordCorrect = await bcrypt.compare(
-        password,
-        result[0]?.password
-      );
+      if (user.payment_status !== 1) {
+        return res.json({ status: "payment status is not valid", token: user.token });
+      }
 
+      const passwordCorrect = await bcrypt.compare(password, user.password);
       if (passwordCorrect) {
-        // Generate JWT token
-        const token = jwt.sign({ username: result[0].username }, saltrounds);
-
-        // Update user token in the database
-        const updateTokenQuery = `UPDATE users SET token = ? WHERE username = ?`;
-        await queryDatabase(updateTokenQuery, [token, result[0].username]);
-
-        res.json(token);
+        const token = jwt.sign({ username: user.username }, saltrounds, { expiresIn: "1h" });
+        const updateTokenQuery = `UPDATE users SET token = ? WHERE id = ?`;
+        await queryDatabase(updateTokenQuery, [token, user.id]);
+        res.json({ token });
       } else {
         res.status(401).send("Username/email or password is incorrect");
       }
