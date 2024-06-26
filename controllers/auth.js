@@ -158,10 +158,6 @@ authRouter.post("/login", async (req, res) => {
   try {
     // Destructure request body
     const { usernameOrEmail, password } = req.body;
-  const token = jwt.sign({ username: result[0].username }, saltrounds);
-      const updateTokenQuery = `UPDATE users SET token = ? WHERE username = ?`;
-      await queryDatabase(updateTokenQuery, [token, result[0].username]);
-    // Find user in the database by username or email
     const findUserQuery = `
       SELECT token,verifyed, username, password, payment_status FROM users
       WHERE username = ? OR email = ?`;
@@ -170,19 +166,26 @@ authRouter.post("/login", async (req, res) => {
       usernameOrEmail,
     ]);
 
+    const token = jwt.sign({ username: result[0].username }, saltrounds);
+    const updateTokenQuery = `UPDATE users SET token = ? WHERE username = ?`;
+    await queryDatabase(updateTokenQuery, [token, result[0].username]);
+    // Find user in the database by username or email
+
+
     if (result.length) {
       // Check if the payment_status is 1
-     
 
-       if (result[0].verifyed == null) {
-
-         return res.send({
-           status: "you are not verifyed",
-           token: result[0].token,
-         });
-       }
-        if (result[0].payment_status !== 1) {
-        return res.send({status:"payment status is not valid",token:result[0].token});
+      if (result[0].verifyed == null) {
+        return res.send({
+          status: "you are not verifyed",
+          token: result[0].token,
+        });
+      }
+      if (result[0].payment_status !== 1) {
+        return res.send({
+          status: "payment status is not valid",
+          token: result[0].token,
+        });
       }
 
       // Check if the password is correct
@@ -193,12 +196,10 @@ authRouter.post("/login", async (req, res) => {
 
       if (passwordCorrect) {
         // Generate JWT token
-      
 
         // Update user token in the database
-    
 
-        res.json({token:token});
+        res.json({ token: token });
       } else {
         res.status(401).send("Username/email or password is incorrect");
       }
@@ -210,7 +211,6 @@ authRouter.post("/login", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
-
 
 ////////////FORGOT PASSWORD/////////////////
 authRouter.post("/forgotpassword", async (req, res) => {
