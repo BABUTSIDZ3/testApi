@@ -160,7 +160,7 @@ authRouter.post("/login", async (req, res) => {
 
     // Find user in the database by username or email
     const findUserQuery = `
-      SELECT token, username, password, payment_status FROM users
+      SELECT token,verifyed, username, password, payment_status FROM users
       WHERE username = ? OR email = ?`;
     const result = await queryDatabase(findUserQuery, [
       usernameOrEmail,
@@ -168,8 +168,14 @@ authRouter.post("/login", async (req, res) => {
     ]);
 
     if (result.length) {
-      
-     
+      // Check if the payment_status is 1
+      if (result[0].payment_status !== 1) {
+        return res.send("payment status is not valid");
+      }
+
+       if (result[0].verifyed !== 1) {
+         return res.send("you are not verifyed");
+       }
 
       // Check if the password is correct
       const passwordCorrect = await bcrypt.compare(
@@ -184,11 +190,8 @@ authRouter.post("/login", async (req, res) => {
         // Update user token in the database
         const updateTokenQuery = `UPDATE users SET token = ? WHERE username = ?`;
         await queryDatabase(updateTokenQuery, [token, result[0].username]);
-const response = {
-  token: token,
-  payment_status_active: result[0]?.payment_status,
-};
-        res.json(response);
+
+        res.json(token);
       } else {
         res.status(401).send("Username/email or password is incorrect");
       }
