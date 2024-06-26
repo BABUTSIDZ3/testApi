@@ -1,7 +1,29 @@
-import express from "express";
+import express, { query } from "express";
 import { queryDatabase } from "../utils/functions.js";
 
 const usersRouter = express.Router();
+
+usersRouter.get("/registered_users", async (req, res) => {
+  const registeredUsersQuery = `SELECT id FROM users WHERE payment_status=1`;
+  try {
+    const result = await queryDatabase(registeredUsersQuery);
+
+    // Extract ids into an array
+    const userIds = result.map((user) => user.id);
+
+    // Get the number of registered users
+    const numberOfUsers = userIds.length;
+
+    // Return the number in an array
+    res.json([numberOfUsers]);
+  } catch (error) {
+    console.error("Error fetching registered users:", error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while fetching registered users" });
+  }
+});
+
 
 usersRouter.post('/delete-seen-questions',async(req,res)=>{
   const {email}=req.body
