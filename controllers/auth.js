@@ -153,7 +153,7 @@ authRouter.post("/login", async (req, res) => {
 
     if (result.length) {
       const user = result[0];
-      if (!user.verified) {
+      if (!user.verifyed) {
         return res.json({ status: "you are not verified", token: user.token, email: user.email });
       }
 
