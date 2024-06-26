@@ -76,7 +76,7 @@ authRouter.post("/register/verify", async (req, res) => {
         service: "gmail",
         auth: {
           user: "goldenstrategy777@gmail.com",
-          pass: "your_email_password",
+          pass: "ztoe uasj dgby ekay",
         },
       });
       const mailOptions = {
@@ -209,7 +209,7 @@ authRouter.post("/forgotpassword", async (req, res) => {
       const mailOptions = {
         from: "goldenstrategy777@gmail.com",
         to: email,
-        subject: "verify your email",
+        subject: "goldenstrategy777@gmail.com",
         html: `
                     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                         <h2 style="color: #0056b3;">Password Reset Verification</h2>
