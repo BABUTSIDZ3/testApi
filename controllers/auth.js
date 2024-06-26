@@ -152,12 +152,15 @@ authRouter.put("/register/verify", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
-
+///////////USER LOGIN/////////////////
 authRouter.post("/login", async (req, res) => {
   try {
+    // Destructure request body
     const { usernameOrEmail, password } = req.body;
+
+    // Find user in the database by username or email
     const findUserQuery = `
-      SELECT id, token, verifyed, username, password, payment_status, email FROM users
+      SELECT token,verifyed, username, password, payment_status FROM users
       WHERE username = ? OR email = ?`;
     const result = await queryDatabase(findUserQuery, [
       usernameOrEmail,
@@ -165,32 +168,22 @@ authRouter.post("/login", async (req, res) => {
     ]);
 
     if (result.length) {
-      const user = result[0];
 
-      if (!user.verified) {
-        return res.send({
-          status: "you are not verified",
-          token: user.token,
-          email: user.email,
-        });
-      }
-
-      if (user.payment_status !== 1) {
-        return res.send({
-          status: "payment status is not valid",
-          token: user.token,
-        });
-      }
-
-      const passwordCorrect = await bcrypt.compare(password, user.password);
+      // Check if the password is correct
+      const passwordCorrect = await bcrypt.compare(
+        password,
+        result[0]?.password
+      );
 
       if (passwordCorrect) {
-        const token = jwt.sign({ username: user.username }, saltrounds, {
-          expiresIn: "1h",
-        });
-        const updateTokenQuery = `UPDATE users SET token = ? WHERE id = ?`;
-        await queryDatabase(updateTokenQuery, [token, user.id]);
-        res.json({ token });
+        // Generate JWT token
+        const token = jwt.sign({ username: result[0].username }, saltrounds);
+
+        // Update user token in the database
+        const updateTokenQuery = `UPDATE users SET token = ? WHERE username = ?`;
+        await queryDatabase(updateTokenQuery, [token, result[0].username]);
+
+        res.json(token);
       } else {
         res.status(401).send("Username/email or password is incorrect");
       }
