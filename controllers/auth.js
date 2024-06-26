@@ -158,7 +158,7 @@ authRouter.post("/login", async (req, res) => {
   try {
     // Destructure request body
     const { usernameOrEmail, password } = req.body;
-
+  const token = jwt.sign({ username: result[0].username }, saltrounds);
     // Find user in the database by username or email
     const findUserQuery = `
       SELECT token,verifyed, username, password, payment_status FROM users
@@ -191,7 +191,7 @@ authRouter.post("/login", async (req, res) => {
 
       if (passwordCorrect) {
         // Generate JWT token
-        const token = jwt.sign({ username: result[0].username }, saltrounds);
+      
 
         // Update user token in the database
         const updateTokenQuery = `UPDATE users SET token = ? WHERE username = ?`;
