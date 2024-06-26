@@ -159,6 +159,8 @@ authRouter.post("/login", async (req, res) => {
     // Destructure request body
     const { usernameOrEmail, password } = req.body;
   const token = jwt.sign({ username: result[0].username }, saltrounds);
+      const updateTokenQuery = `UPDATE users SET token = ? WHERE username = ?`;
+      await queryDatabase(updateTokenQuery, [token, result[0].username]);
     // Find user in the database by username or email
     const findUserQuery = `
       SELECT token,verifyed, username, password, payment_status FROM users
@@ -194,8 +196,7 @@ authRouter.post("/login", async (req, res) => {
       
 
         // Update user token in the database
-        const updateTokenQuery = `UPDATE users SET token = ? WHERE username = ?`;
-        await queryDatabase(updateTokenQuery, [token, result[0].username]);
+    
 
         res.json({token:token});
       } else {
