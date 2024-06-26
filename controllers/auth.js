@@ -153,53 +153,44 @@ authRouter.put("/register/verify", async (req, res) => {
   }
 });
 
-///////////USER LOGIN/////////////////
 authRouter.post("/login", async (req, res) => {
   try {
-    // Destructure request body
     const { usernameOrEmail, password } = req.body;
     const findUserQuery = `
-      SELECT token,verifyed, username, password, payment_status FROM users
+      SELECT id, token, verified, username, password, payment_status, email FROM users
       WHERE username = ? OR email = ?`;
     const result = await queryDatabase(findUserQuery, [
       usernameOrEmail,
       usernameOrEmail,
     ]);
 
-    const token = jwt.sign({ username: result[0].username }, saltrounds);
-    const updateTokenQuery = `UPDATE users SET token = ? WHERE username = ?`;
-    await queryDatabase(updateTokenQuery, [token, result[0].username]);
-    // Find user in the database by username or email
-
-
     if (result.length) {
-      // Check if the payment_status is 1
+      const user = result[0];
 
-      if (result[0].verifyed == null) {
+      if (!user.verified) {
         return res.send({
-          status: "you are not verifyed",
-          token: result[0].token,
+          status: "you are not verified",
+          token: user.token,
+          email: user.email,
         });
       }
-      if (result[0].payment_status !== 1) {
+
+      if (user.payment_status !== 1) {
         return res.send({
           status: "payment status is not valid",
-          token: result[0].token,
+          token: user.token,
         });
       }
 
-      // Check if the password is correct
-      const passwordCorrect = await bcrypt.compare(
-        password,
-        result[0]?.password
-      );
+      const passwordCorrect = await bcrypt.compare(password, user.password);
 
       if (passwordCorrect) {
-        // Generate JWT token
-
-        // Update user token in the database
-
-        res.json({ token: token });
+        const token = jwt.sign({ username: user.username }, saltrounds, {
+          expiresIn: "1h",
+        });
+        const updateTokenQuery = `UPDATE users SET token = ? WHERE id = ?`;
+        await queryDatabase(updateTokenQuery, [token, user.id]);
+        res.json({ token });
       } else {
         res.status(401).send("Username/email or password is incorrect");
       }
@@ -211,6 +202,7 @@ authRouter.post("/login", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
+
 
 ////////////FORGOT PASSWORD/////////////////
 authRouter.post("/forgotpassword", async (req, res) => {
