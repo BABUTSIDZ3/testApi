@@ -130,7 +130,7 @@ authRouter.put("/register/verify", async (req, res) => {
     const result = await queryDatabase(findUserQuery, [verificationnumber]);
 
     if (result.length) {
-      const updateQuery = `UPDATE users SET verified = true, verificationnumber = NULL WHERE id = ?`;
+      const updateQuery = `UPDATE users SET verifyed = true, verificationnumber = NULL WHERE id = ?`;
       await queryDatabase(updateQuery, [result[0].id]);
       res.send("verified_success");
     } else {
@@ -147,7 +147,7 @@ authRouter.post("/login", async (req, res) => {
   try {
     const { usernameOrEmail, password } = req.body;
     const findUserQuery = `
-      SELECT id, token, verified, username, password, payment_status, email FROM users
+      SELECT id, token, verifyed, username, password, payment_status, email FROM users
       WHERE username = ? OR email = ?`;
     const result = await queryDatabase(findUserQuery, [usernameOrEmail, usernameOrEmail]);
 
