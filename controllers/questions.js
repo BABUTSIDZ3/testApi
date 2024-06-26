@@ -168,7 +168,7 @@ questionsRouter.post("/answer", async (req, res) => {
       ? question[0].right_answer_GE
       : question[0].right_answer_EN === answer
   ) {
-    res.send("Your answer is correct", "usex"+use_x);
+    res.send(`use-x: ${use_x}`);
     await queryDatabase(coinAddQuerry, [coinToAdd, user_id]);
   } else {
     await queryDatabase(incorrectAnswerQuerry, [user_id]);
