@@ -173,7 +173,7 @@ authRouter.post("/login", async (req, res) => {
         return res.send("payment status is not valid");
       }
 
-       if (result[0].verifyed !== 1) {
+       if (result[0].verifyed == null) {
          return res.send("you are not verifyed");
        }
 
