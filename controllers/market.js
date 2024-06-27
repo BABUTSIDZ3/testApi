@@ -64,7 +64,7 @@ marketRouter.post("/buy-gift-card", async (req, res) => {
     [card_id]
   );
   if ((gift_card_id == 0)) {
-    res.send("you alredy bought a gift card");
+    res.status(400).send("you alredy bought a gift card");
   } else {
     if (product_quantity > 0) {
       if (coin < product_price_in_coin) {
