@@ -68,7 +68,7 @@ marketRouter.post("/buy-gift-card", async (req, res) => {
   } else {
     if (product_quantity > 0) {
       if (coin < product_price_in_coin) {
-        res.send("you do not have enough coin");
+        res.status(400).send("you do not have enough coin");
       } else {
         await queryDatabase(userUpdateQuerry, [card_id, email]);
         await queryDatabase(updateQuantityQuerry, [card_id]);
@@ -190,7 +190,7 @@ marketRouter.post("/buy-health", async (req, res) => {
       }
       const userUpdateQuery = `UPDATE users SET health = health + ?, coin = coin - ?,health_with_coin=health_with_coin+1 WHERE email=?`;
       if (userInfo.health_with_coin > 9) {
-        res.send(`you can't buy more health`);
+        res.status(400).send(`you can't buy more health`);
       } else {
         await queryDatabase(userUpdateQuery, [
           1,
@@ -213,7 +213,7 @@ marketRouter.post("/buy-health", async (req, res) => {
 
       const userUpdateQuery = `UPDATE users SET health = health + ?, balance = balance - ?,health_with_money=health_with_money+1 WHERE email=?`;
       if (userInfo.health_with_money > 9) {
-        res.send(`you can't buy more health`);
+       res.status(400).send(`you can't buy more health`);
       } else {
         await queryDatabase(userUpdateQuery, [
           1,
@@ -247,7 +247,7 @@ marketRouter.post("/buy-help", async (req, res) => {
 
       const userUpdateQuery = `UPDATE users SET help = help + ?, coin = coin - ? ,help_with_coin=help_with_coin+1 WHERE email=?`;
       if (userInfo.help_with_coin > 9) {
-        res.send(`you can't buy more help`);
+        res.status(400).send(`you can't buy more help`);
       } else {
         await queryDatabase(userUpdateQuery, [
           1,
@@ -271,7 +271,7 @@ marketRouter.post("/buy-help", async (req, res) => {
 
       const userUpdateQuery = `UPDATE users SET help = help + ?, balance = balance - ?,help_with_money=help_with_money+1 WHERE email=?`;
       if (userInfo.help_with_money > 9) {
-        res.send(`you can't buy more help`);
+       res.status(400).send(`you can't buy more help`);
       } else {
         await queryDatabase(userUpdateQuery, [
           1,
@@ -305,7 +305,7 @@ marketRouter.post("/buy-x-card", async (req, res) => {
       }
       const userUpdateQuery = `UPDATE users SET ${which_x} = ${which_x} + ?, coin = coin - ?,x_card_with_coin=x_card_with_coin+1 WHERE email=?`;
       if (userInfo.x_card_with_coin > 9) {
-        res.send(`you can't buy more x-card`);
+        res.status(400).send(`you can't buy more x-card`);
       } else {
         await queryDatabase(userUpdateQuery, [
           1,
@@ -326,7 +326,7 @@ marketRouter.post("/buy-x-card", async (req, res) => {
         return res.status(400).send("You don't have enough balance");
       }
       if (userInfo.x_card_with_money > 9) {
-        res.send(`you can't buy more x-card`);
+       res.status(400).send(`you can't buy more x-card`);
       } else {
         const userUpdateQuery = `UPDATE users SET ${which_x} = ${which_x} + ?, balance = balance - ?,x_card_with_money=x_card_with_money+1 WHERE email=?`;
         await queryDatabase(userUpdateQuery, [
