@@ -34,9 +34,9 @@ marketRouter.get("/", async (req, res) => {
   let selectFields;
   // Determine which fields to select based on the game status
   if (gameStatus === 1) {
-    selectFields = "product_name, product_image, product_price_in_usd,description";
+    selectFields = "product_name, product_image, product_price_in_usd,description,id";
   } else {
-    selectFields = "product_name, product_image, product_price_in_coin,description";
+    selectFields = "product_name, product_image, product_price_in_coin,description,id";
   }
 
   // Construct the base query to select items from the market table
