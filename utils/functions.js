@@ -24,21 +24,6 @@ export const getUserIdByEmail = async (email) => {
   } catch (error) {}
 };
 
-//Function for adding user transaction in database
-export const addCustomerTransaction = async (
-  userId,
-  transactionType,
-  amount,
-  dateTime
-) => {
-  try {
-    await queryDatabase(
-      `INSERT INTO Transactions (user_id,transaction_type,amount,createdAt) VALUES (?,?,?,?)`,
-      [userId, transactionType, amount / 100, dateTime]
-    );
-  } catch (error) {}
-};
-
 export async function levelup(req, res) {
   try {
     let rounds = 0;
@@ -124,15 +109,10 @@ export async function levelup(req, res) {
               forbalancetobecollected - peopleOnFirstLevelToUpdate;
             if (remainingBalance > 0) {
               await queryDatabase(
-                `UPDATE users SET balance = balance + ${parseFloat(
-                  forbalance
-                ).toFixed(
-                  2
-                )}, balancetobecollected = balancetobecollected + ${parseFloat(
-                  remainingBalance
-                ).toFixed(2)}, paydonlevel = 0, level = ${
-                  response.paydonlevel0[0].level + 1
-                } WHERE id = ${test[0].id}`
+                `UPDATE users SET balance = balance + ${forbalance}, balancetobecollected = balancetobecollected + ${remainingBalance}
+               , paydonlevel = 0, level = ${
+                 response.paydonlevel0[0].level + 1
+               } WHERE id = ${test[0].id}`
               );
             }
           }
