@@ -21,10 +21,11 @@ fromAdminRouter.get("/gift-cards", async (req, res) => {
   res.send(result);
 });
 
+
 fromAdminRouter.get("/balance", async (req, res) => {
   try {
-    const getBalanceQuery = `SELECT balance, balancetobecollected FROM users`;
-    const balances = await queryDatabase(getBalanceQuery);
+    const getBalanceQuery = `SELECT balance, balancetobecollected FROM users WHERE payment_status=?`;
+    const balances = await queryDatabase(getBalanceQuery,[1]);
 
     let totalBalance = 0;
     let totalBalanceToBeCollected = 0;
