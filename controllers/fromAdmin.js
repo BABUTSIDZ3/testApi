@@ -99,7 +99,6 @@ fromAdminRouter.post("/subscription", async (req, res) => {
         }
       );
       await queryDatabase(transactionQuerry, [3, email, date, "subscription"]);
-      levelup(req, res);
       res.send("Updated successfully");
     }
   } catch (error) {
@@ -152,7 +151,7 @@ fromAdminRouter.post("/registration", async (req, res) => {
         }
       );
       await queryDatabase(transactionQuerry, [3, email, date, "registration"]);
-      levelup(req, res);
+    await  levelup(req, res);
       res.send("Updated successfully");
     }
   } catch (error) {
