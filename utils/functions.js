@@ -13,62 +13,77 @@ export async function queryDatabase(sql, values) {
   }
 }
 
+
 export async function levelup(req, res) {
   try {
+    let rounds = 0;
     const runLevelUp = async () => {
       try {
-        let round = 0;
+        rounds = 0;
         const sql_query =
-          "SELECT id,balance,balancetobecollected,subscription,paydonlevel,level FROM users";
+          "SELECT id,balancetobecollected,paydonlevel,level,balance,payment_status,subscription FROM users";
         const results = await queryDatabase(sql_query);
         const filteredResult = results.filter(
-          (user) => user.payment_status !== 0
+          (response) => response.payment_status !== 0
         );
-
         const groupedResult = {};
-        filteredResult.forEach((user) => {
-          if (!groupedResult[user.level]) {
-            groupedResult[user.level] = [];
+        filteredResult.forEach((item) => {
+          if (!groupedResult[item.level]) {
+            groupedResult[item.level] = { paydonlevel0: [], paydonlevel1: [] };
           }
-          if (user.paydonlevel === 0 && user.balancetobecollected !== 0) {
-            groupedResult[user.level].push(user);
+          if (item.paydonlevel === 0) {
+            groupedResult[item.level].paydonlevel0.push(item);
+          } else if (item.paydonlevel === 1) {
+            groupedResult[item.level].paydonlevel1.push(item);
           }
         });
-
         for (const level of Object.keys(groupedResult)) {
           const response = groupedResult[level];
-          if (response.length === 2) {
-            round = 1;
-            const totalBalancetobecollected = response.reduce(
+          if (response.paydonlevel0.length === 2) {
+            rounds++;
+            const totalBalancetobecollected = response.paydonlevel0.reduce(
               (total, user) => total + Number(user.balancetobecollected),
               0
             );
-            const balancetobecollectedonlevel = totalBalancetobecollected * 0.8;
-            let forbalance = balancetobecollectedonlevel * 0.1;
+            const balancetobecollectedonlevel =
+              totalBalancetobecollected - totalBalancetobecollected / 5;
             const forbalancetobecollected = balancetobecollectedonlevel * 0.9;
-            const levelquerry = `SELECT id FROM users WHERE level=?`;
-            const allUsersOnSameLevel = await queryDatabase(levelquerry, [
-              level,
-            ]);
-            const userToLevelUp = response.sort((a, b) => a.id - b.id)[0];
-
-            if (userToLevelUp.subscription === 0) {
-              forbalance /= 2;
+            let forbalance = balancetobecollectedonlevel * 0.1;
+            if (response.paydonlevel0[0].subscription === 0) {
+              forbalance = forbalance / 2;
             }
-
-            const updatepaydonlevelQuery = `UPDATE users SET balancetobecollected = 0, paydonlevel = 1 WHERE level = ${allUsersOnSameLevel[0].id} AND paydonlevel = 0`;
-            await queryDatabase(updatepaydonlevelQuery);
-
-            const updateUserQuery = `UPDATE users SET paydonlevel=0, balance = balance + ${forbalance}, balancetobecollected = balancetobecollected + ${forbalancetobecollected}, level = level + 1 WHERE id = ${userToLevelUp.id}`;
-            await queryDatabase(updateUserQuery);
+            const userwhichincreasebalance = response.paydonlevel1.concat(
+              response.paydonlevel0
+            );
+            const test = userwhichincreasebalance.sort(function (a, b) {
+              return a.id - b.id;
+            });
+            const updatepaydonlevel = `UPDATE users SET balancetobecollected = 0, paydonlevel = 1 WHERE level = ${response.paydonlevel0[0].level}`;
+            await queryDatabase(updatepaydonlevel);
+          
+            const remainingBalance =
+              forbalancetobecollected - peopleOnFirstLevelToUpdate;
+            if (remainingBalance > 0) {
+              await queryDatabase(
+                `UPDATE users SET balance = balance + ${
+                  forbalance
+                }, balancetobecollected = balancetobecollected + ${
+                  remainingBalance
+               }, paydonlevel = 0, level = ${
+                  response.paydonlevel0[0].level + 1
+                } WHERE id = ${test[0].id}`
+              );
+            }
           }
         }
-        if (round !== 0) await runLevelUp();
       } catch (error) {
         res.send(error.message);
       }
+      if (rounds > 0) {
+        await runLevelUp();
+      }
+      return;
     };
-
     await runLevelUp();
   } catch (error) {
     res.send(error.message);
