@@ -62,7 +62,7 @@ authRouter.post("/register", async (req, res) => {
     }
 
     // Insert new user into the database
-    const sql_query = `INSERT INTO users (username, password, email, avatar, referralCode)
+    const sql_query = `INSERT INTO users (username, password, email, avatar, referalCode)
           VALUES (?, ?, ?, ?, ?)`;
     const results = await queryDatabase(sql_query, [
       username,
@@ -74,7 +74,7 @@ authRouter.post("/register", async (req, res) => {
 
     // Check if there's a referrer and update their balance if referralCode matches
     if (referralCode) {
-      const findReferrerQuery = `SELECT id FROM users WHERE referralCode = ?`;
+      const findReferrerQuery = `SELECT id FROM users WHERE referalCode = ?`;
       const referrer = await queryDatabase(findReferrerQuery, [referralCode]);
       if (referrer.length > 0) {
         await queryDatabase(
