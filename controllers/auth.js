@@ -73,9 +73,11 @@ authRouter.post("/register", async (req, res) => {
 
     // Check if there's a referrer and update their balance if referralCode matches
     if (referralCode) {
+      console.log("shevida");
       const findReferrerQuery = `SELECT id FROM users WHERE referralCode = ?`;
       const referrer = await queryDatabase(findReferrerQuery, [referralCode]);
       if (referrer.length > 0) {
+        console.log('moidzebna');
         await queryDatabase(
           `UPDATE users SET balance = balance + 1 WHERE id = ?`,
           [referrer[0].id]
