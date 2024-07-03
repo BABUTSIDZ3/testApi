@@ -44,12 +44,14 @@ export async function levelup(req, res) {
 
         for (const level of Object.keys(groupedResult)) {
           const response = groupedResult[level];
-          if (response.paydonlevel0.length === 2) {
+          if (response.paydonlevel0.length >= 2) {
             rounds++;
-            const totalBalancetobecollected = response.paydonlevel0.reduce(
-              (total, user) => total + Number(user.balancetobecollected),
-              0
-            );
+            const totalBalancetobecollected = response.paydonlevel0
+              .slice(0, 2)
+              .reduce(
+                (total, user) => total + Number(user.balancetobecollected),
+                0
+              );
             const balancetobecollectedonlevel = totalBalancetobecollected * 0.8; // 80%
             const forbalancetobecollected = balancetobecollectedonlevel * 0.9; // 90%
             let forbalance = balancetobecollectedonlevel * 0.1; // 10%
@@ -65,7 +67,10 @@ export async function levelup(req, res) {
               (a, b) => a.id - b.id
             );
 
-            const updatepaydonlevelQuery = `UPDATE users SET balancetobecollected = 0, paydonlevel = 1 WHERE level = ${response.paydonlevel0[0].level}`;
+            const updatepaydonlevelQuery = `UPDATE users SET balancetobecollected = 0, paydonlevel = 1 WHERE id IN (${response.paydonlevel0
+              .slice(0, 2)
+              .map((user) => user.id)
+              .join(",")})`;
             console.log("Executing SQL query:", updatepaydonlevelQuery); // Debug statement
             await queryDatabase(updatepaydonlevelQuery);
 
