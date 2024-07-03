@@ -51,9 +51,11 @@ usersRouter.get("/:token", async (req, res) => {
        const {email} = data[0]
        const transactionsQuerry = `SELECT date,status,amount,trasaction_info FROM transactions WHERE user_email=?`;
        const transactions = await queryDatabase(transactionsQuerry, [email]);
-         const response={userData:data,
-          transactions:transactions
-         }
+         const response = {
+           userData: data,
+           transactions: transactions,
+           notifications: notifications,
+         };
       res.send(response);
      } else {
        res.send("user not found");
