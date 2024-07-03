@@ -7,21 +7,37 @@ import jwt from "jsonwebtoken";
 
 const authRouter = express.Router();
 
-////////////USER REGISTRATION/////////////////
+const generateReferralCode = () => {
+  const digits = "0123456789";
+  let referralCode = "5"; // Start with 5 as per your requirement
+  for (let i = 0; i < 9; i++) {
+    referralCode += digits[Math.floor(Math.random() * digits.length)];
+  }
+  return referralCode;
+};
+
+const isReferralCodeUnique = async (code) => {
+  const existingCode = await queryDatabase(
+    `SELECT id FROM users WHERE referralCode = ?`,
+    [code]
+  );
+  return existingCode.length === 0;
+};
+
 authRouter.post("/register", async (req, res) => {
   try {
-    // Destructure request body
-    let { username, password, email, avatar } = req.body;
-    if (avatar == 1) {
-      avatar =
-        "https://photos.google.com/u/2/photo/AF1QipOGYCB4npjaJLPuJQqAqEJKsKH7KyrCxyBDeubS";
-    } else {
-      avatar =
-        "https://photos.google.com/u/2/photo/AF1QipO8idVh2ok3RbK-Q01vhOF3q7MN3zmiU7DX-stB";
-    }
-    // Hash password
+    let { username, password, email, avatar, referralCode } = req.body;
+
+    // Set default avatar based on avatar value
+    avatar =
+      avatar == 1
+        ? "https://photos.google.com/u/2/photo/AF1QipOGYCB4npjaJLPuJQqAqEJKsKH7KyrCxyBDeubS"
+        : "https://photos.google.com/u/2/photo/AF1QipO8idVh2ok3RbK-Q01vhOF3q7MN3zmiU7DX-stB";
+
+    // Hash password using bcrypt
     const passwordHash = await bcrypt.hash(password, Number(saltrounds));
-    // Check if username exists
+
+    // Check if username is already taken
     const existingUserName = await queryDatabase(
       `SELECT id FROM users WHERE username = ?`,
       [username]
@@ -30,7 +46,7 @@ authRouter.post("/register", async (req, res) => {
       return res.status(400).json("Username already taken");
     }
 
-    // Check if email exists
+    // Check if email is already taken
     const existingUserEmail = await queryDatabase(
       `SELECT id FROM users WHERE email = ?`,
       [email]
@@ -39,27 +55,54 @@ authRouter.post("/register", async (req, res) => {
       return res.status(400).json("Email already taken");
     }
 
-    // Insert new user
-    const sql_query = `INSERT INTO users (username, password, email, avatar)
-          VALUES (?, ?, ?, ?)`;
+    // Generate a unique 10-digit referral code
+    let uniqueReferralCode = generateReferralCode();
+    while (!(await isReferralCodeUnique(uniqueReferralCode))) {
+      uniqueReferralCode = generateReferralCode();
+    }
+
+    // Insert new user into the database
+    const sql_query = `INSERT INTO users (username, password, email, avatar, referralCode)
+          VALUES (?, ?, ?, ?, ?)`;
     const results = await queryDatabase(sql_query, [
       username,
       passwordHash,
       email,
       avatar,
+      uniqueReferralCode,
     ]);
+
+    // Check if there's a referrer and update their balance if referralCode matches
+    if (referralCode) {
+      const findReferrerQuery = `SELECT id FROM users WHERE referralCode = ?`;
+      const referrer = await queryDatabase(findReferrerQuery, [referralCode]);
+      if (referrer.length > 0) {
+        await queryDatabase(
+          `UPDATE users SET balance = balance + 1 WHERE id = ?`,
+          [referrer[0].id]
+        );
+      } else {
+        return res.status(400).json("Invalid referral code");
+      }
+    }
+
+    // Return successful response
     res.status(201).json({
       result: {
         id: parseInt(results.insertId),
-        ...req.body,
+        username,
+        email,
+        avatar,
+        referralCode: uniqueReferralCode,
       },
-      message: "მომხმარებელი დამატებულია",
+      message: "User registered successfully",
     });
   } catch (error) {
     console.error("Error:", error.message);
     res.status(500).json(error.message);
   }
 });
+
 
 
 // Verify After Registration
