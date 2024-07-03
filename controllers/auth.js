@@ -61,28 +61,38 @@ authRouter.post("/register", async (req, res) => {
       uniqueReferralCode = generateReferralCode();
     }
 
-    // Insert new user into the database
-    const sql_query = `INSERT INTO users (username, password, email, avatar, referralCode,referrer)
-          VALUES (?, ?, ?, ?, ?,?)`;
-let referrer= null
+    // Initialize referrer as null
+    let referrer = null;
+
     // Check if there's a referrer and update their balance if referralCode matches
     if (referralCode) {
       const findReferrerQuery = `SELECT id FROM users WHERE referralCode = ?`;
-      const referrer = await queryDatabase(findReferrerQuery, [referralCode]);
-      if (referrer.length > 0) {
-referrer = referrer[0].id;
+      const referrerResult = await queryDatabase(findReferrerQuery, [
+        referralCode,
+      ]);
+      if (referrerResult.length > 0) {
+        referrer = referrerResult[0].id;
+        await queryDatabase(
+          `UPDATE users SET balance = balance + 1 WHERE id = ?`,
+          [referrer]
+        );
       } else {
         return res.status(400).json("Invalid referral code");
       }
     }
+
+    // Insert new user into the database
+    const sql_query = `INSERT INTO users (username, password, email, avatar, referralCode, referrer)
+          VALUES (?, ?, ?, ?, ?, ?)`;
     const results = await queryDatabase(sql_query, [
       username,
       passwordHash,
       email,
       avatar,
       uniqueReferralCode,
-      referrer
+      referrer,
     ]);
+
     // Return successful response
     res.status(201).json({
       result: {
@@ -99,6 +109,7 @@ referrer = referrer[0].id;
     res.status(500).json(error.message);
   }
 });
+
 
 // Verify After Registration
 authRouter.post("/register/verify", async (req, res) => {
