@@ -18,7 +18,7 @@ const generateReferralCode = () => {
 
 const isReferralCodeUnique = async (code) => {
   const existingCode = await queryDatabase(
-    `SELECT id FROM users WHERE referralCode = ?`,
+    `SELECT id FROM users WHERE referalCode = ?`,
     [code]
   );
   return existingCode.length === 0;
