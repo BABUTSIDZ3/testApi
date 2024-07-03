@@ -63,13 +63,7 @@ authRouter.post("/register", async (req, res) => {
     // Insert new user into the database
     const sql_query = `INSERT INTO users (username, password, email, avatar, referralCode)
           VALUES (?, ?, ?, ?, ?)`;
-    const results = await queryDatabase(sql_query, [
-      username,
-      passwordHash,
-      email,
-      avatar,
-      uniqueReferralCode,
-    ]);
+   
 
     // Check if there's a referrer and update their balance if referralCode matches
     if (referralCode) {
@@ -86,7 +80,13 @@ authRouter.post("/register", async (req, res) => {
         return res.status(400).json("Invalid referral code");
       }
     }
-
+ const results = await queryDatabase(sql_query, [
+      username,
+      passwordHash,
+      email,
+      avatar,
+      uniqueReferralCode,
+    ]);
     // Return successful response
     res.status(201).json({
       result: {
