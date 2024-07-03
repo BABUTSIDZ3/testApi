@@ -61,9 +61,7 @@ export async function levelup(req, res) {
             const updatepaydonlevel = `UPDATE users SET balancetobecollected = 0, paydonlevel = 1 WHERE level = ${response.paydonlevel0[0].level}`;
             await queryDatabase(updatepaydonlevel);
           
-            const remainingBalance =
-              forbalancetobecollected - peopleOnFirstLevelToUpdate;
-            if (remainingBalance > 0) {
+         
               await queryDatabase(
                 `UPDATE users SET balance = balance + ${
                   forbalance
@@ -74,7 +72,7 @@ export async function levelup(req, res) {
                 } WHERE id = ${test[0].id}`
               );
             }
-          }
+          
         }
       } catch (error) {
         res.send(error.message);
