@@ -54,7 +54,7 @@ export async function levelup(req, res) {
             const updatepaydonlevelQuery = `UPDATE users SET balancetobecollected = 0, paydonlevel = 1 WHERE level = ${level} AND paydonlevel = 0`;
             await queryDatabase(updatepaydonlevelQuery);
 
-            const updateUserQuery = `UPDATE users SET balance = balance + ${forbalance}, balancetobecollected = balancetobecollected + ${forbalancetobecollected}, level = level + 1 WHERE id = ${userToLevelUp.id}`;
+            const updateUserQuery = `UPDATE users SET paydonlevel=0 balance = balance + ${forbalance}, balancetobecollected = balancetobecollected + ${forbalancetobecollected}, level = level + 1 WHERE id = ${userToLevelUp.id}`;
             await queryDatabase(updateUserQuery);
           }
         }
