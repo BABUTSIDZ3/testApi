@@ -72,10 +72,6 @@ authRouter.post("/register", async (req, res) => {
       ]);
       if (referrerResult.length > 0) {
         referrer = referrerResult[0].id;
-        await queryDatabase(
-          `UPDATE users SET balance = balance + 1 WHERE id = ?`,
-          [referrer]
-        );
       } else {
         return res.status(400).json("Invalid referral code");
       }
