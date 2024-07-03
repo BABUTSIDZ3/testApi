@@ -132,13 +132,14 @@ fromAdminRouter.post("/registration", async (req, res) => {
     }
     return data;
   }
+    const { email } = req.body;
   const referrerQuerry=`SELECT referrer FROM users WHERE email=?`
   const referrer=await queryDatabase(referrerQuerry,[email])
 if(referrer.length){
   const updateReferalQuerry=`UPDATE users SET balance=balance+1 WHERE id=?`
   await queryDatabase(updateReferalQuerry, [referrer[0].referrer]);
 }
-  const { email } = req.body;
+
   const transactionQuerry = `INSERT INTO transactions (amount, user_email,date,trasaction_info) VALUES (?, ?, ?,?)`;
   const updateQuery = `UPDATE users SET payment_status=?, subscription=? WHERE email=?`;
   const afterOneMonthQuerry = `UPDATE users SET subscription=? WHERE email=?`;
