@@ -132,11 +132,18 @@ fromAdminRouter.post("/registration", async (req, res) => {
     }
     return data;
   }
-    const { email } = req.body;
+  const { email } = req.body;
   const referrerQuerry=`SELECT referrer FROM users WHERE email=?`
   const referrer=await queryDatabase(referrerQuerry,[email])
 if(referrer.length){
   const updateReferalQuerry=`UPDATE users SET balance=balance+1 WHERE id=?`
+  const getUserQuerry=`SELECT id FROM users WHERE id=?`
+  const userResult = await queryDatabase(getUserQuerry, [referrer[0].referrer]);
+const insertNotificationQuerry=`INSERT INTO notifications (notification,userId) VALUES (?,?)`
+await queryDatabase(insertNotificationQuerry, [
+  "თქვენი რეფერალური კოდიტ დარეგისტრირდა მომხმარებელი და თქვენ დარეგიცხატ 1 დოლარი",
+  userResult[0].id,
+]);
   await queryDatabase(updateReferalQuerry, [referrer[0].referrer]);
 }
 
