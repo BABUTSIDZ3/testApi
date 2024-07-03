@@ -29,9 +29,10 @@ authRouter.post("/register", async (req, res) => {
     let { username, password, email, avatar, referralCode } = req.body;
 
     // Set default avatar based on avatar value
-    avatar = avatar == 1
-      ? "https://photos.google.com/u/2/photo/AF1QipOGYCB4npjaJLPuJQqAqEJKsKH7KyrCxyBDeubS"
-      : "https://photos.google.com/u/2/photo/AF1QipO8idVh2ok3RbK-Q01vhOF3q7MN3zmiU7DX-stB";
+    avatar =
+      avatar == 1
+        ? "https://photos.google.com/u/2/photo/AF1QipOGYCB4npjaJLPuJQqAqEJKsKH7KyrCxyBDeubS"
+        : "https://photos.google.com/u/2/photo/AF1QipO8idVh2ok3RbK-Q01vhOF3q7MN3zmiU7DX-stB";
 
     // Hash password using bcrypt
     const passwordHash = await bcrypt.hash(password, Number(saltrounds));
@@ -61,31 +62,26 @@ authRouter.post("/register", async (req, res) => {
     }
 
     // Insert new user into the database
-    const sql_query = `INSERT INTO users (username, password, email, avatar, referralCode)
-          VALUES (?, ?, ?, ?, ?)`;
-   
-
+    const sql_query = `INSERT INTO users (username, password, email, avatar, referralCode,referrer)
+          VALUES (?, ?, ?, ?, ?,?)`;
+let referrer= null
     // Check if there's a referrer and update their balance if referralCode matches
     if (referralCode) {
-      console.log("shevida");
       const findReferrerQuery = `SELECT id FROM users WHERE referralCode = ?`;
       const referrer = await queryDatabase(findReferrerQuery, [referralCode]);
       if (referrer.length > 0) {
-        console.log('moidzebna');
-        await queryDatabase(
-          `UPDATE users SET balance = balance + 1 WHERE id = ?`,
-          [referrer[0].id]
-        );
+referrer = referrer[0].id;
       } else {
         return res.status(400).json("Invalid referral code");
       }
     }
- const results = await queryDatabase(sql_query, [
+    const results = await queryDatabase(sql_query, [
       username,
       passwordHash,
       email,
       avatar,
       uniqueReferralCode,
+      referrer
     ]);
     // Return successful response
     res.status(201).json({
@@ -103,8 +99,6 @@ authRouter.post("/register", async (req, res) => {
     res.status(500).json(error.message);
   }
 });
-
-
 
 // Verify After Registration
 authRouter.post("/register/verify", async (req, res) => {
@@ -193,21 +187,33 @@ authRouter.post("/login", async (req, res) => {
     const findUserQuery = `
       SELECT id, token, verifyed, username, password, payment_status, email FROM users
       WHERE username = ? OR email = ?`;
-    const result = await queryDatabase(findUserQuery, [usernameOrEmail, usernameOrEmail]);
+    const result = await queryDatabase(findUserQuery, [
+      usernameOrEmail,
+      usernameOrEmail,
+    ]);
 
     if (result.length) {
       const user = result[0];
       if (!user.verifyed) {
-        return res.json({ status: "you are not verified", token: user.token, email: user.email });
+        return res.json({
+          status: "you are not verified",
+          token: user.token,
+          email: user.email,
+        });
       }
 
       if (user.payment_status !== 1) {
-        return res.json({ status: "payment status is not valid", token: user.token });
+        return res.json({
+          status: "payment status is not valid",
+          token: user.token,
+        });
       }
 
       const passwordCorrect = await bcrypt.compare(password, user.password);
       if (passwordCorrect) {
-        const token = jwt.sign({ username: user.username }, saltrounds, { expiresIn: "1h" });
+        const token = jwt.sign({ username: user.username }, saltrounds, {
+          expiresIn: "1h",
+        });
         const updateTokenQuery = `UPDATE users SET token = ? WHERE id = ?`;
         await queryDatabase(updateTokenQuery, [token, user.id]);
         res.json({ token });
@@ -222,7 +228,6 @@ authRouter.post("/login", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
-
 
 ////////////FORGOT PASSWORD/////////////////
 authRouter.post("/forgotpassword", async (req, res) => {
