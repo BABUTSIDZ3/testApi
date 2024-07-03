@@ -1,3 +1,4 @@
+
 import { conection } from "../app.js";
 
 // Function to handle database queries
@@ -46,7 +47,9 @@ export async function levelup(req, res) {
             const balancetobecollectedonlevel = totalBalancetobecollected * 0.8;
             let forbalance = balancetobecollectedonlevel * 0.1;
             const forbalancetobecollected = balancetobecollectedonlevel * 0.9;
-console.log(groupedResult);
+            const levelquerry=`SELECT id FROM users WHERE level=?`
+const allUsersOnSameLevel=queryDatabase(levelquerry,[level])
+console.log(allUsersOnSameLevel);
             const userToLevelUp = response.sort((a, b) => a.id - b.id)[0];
 
             if (userToLevelUp.subscription === 0) {
