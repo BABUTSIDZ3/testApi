@@ -18,7 +18,7 @@ const generateReferralCode = () => {
 
 const isReferralCodeUnique = async (code) => {
   const existingCode = await queryDatabase(
-    `SELECT id FROM users WHERE referalCode = ?`,
+    `SELECT id FROM users WHERE referralCode = ?`,
     [code]
   );
   return existingCode.length === 0;
@@ -29,10 +29,9 @@ authRouter.post("/register", async (req, res) => {
     let { username, password, email, avatar, referralCode } = req.body;
 
     // Set default avatar based on avatar value
-    avatar =
-      avatar == 1
-        ? "https://photos.google.com/u/2/photo/AF1QipOGYCB4npjaJLPuJQqAqEJKsKH7KyrCxyBDeubS"
-        : "https://photos.google.com/u/2/photo/AF1QipO8idVh2ok3RbK-Q01vhOF3q7MN3zmiU7DX-stB";
+    avatar = avatar == 1
+      ? "https://photos.google.com/u/2/photo/AF1QipOGYCB4npjaJLPuJQqAqEJKsKH7KyrCxyBDeubS"
+      : "https://photos.google.com/u/2/photo/AF1QipO8idVh2ok3RbK-Q01vhOF3q7MN3zmiU7DX-stB";
 
     // Hash password using bcrypt
     const passwordHash = await bcrypt.hash(password, Number(saltrounds));
@@ -62,7 +61,7 @@ authRouter.post("/register", async (req, res) => {
     }
 
     // Insert new user into the database
-    const sql_query = `INSERT INTO users (username, password, email, avatar, referalCode)
+    const sql_query = `INSERT INTO users (username, password, email, avatar, referralCode)
           VALUES (?, ?, ?, ?, ?)`;
     const results = await queryDatabase(sql_query, [
       username,
@@ -74,7 +73,7 @@ authRouter.post("/register", async (req, res) => {
 
     // Check if there's a referrer and update their balance if referralCode matches
     if (referralCode) {
-      const findReferrerQuery = `SELECT id FROM users WHERE referalCode = ?`;
+      const findReferrerQuery = `SELECT id FROM users WHERE referralCode = ?`;
       const referrer = await queryDatabase(findReferrerQuery, [referralCode]);
       if (referrer.length > 0) {
         await queryDatabase(
