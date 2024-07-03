@@ -48,7 +48,7 @@ export async function levelup(req, res) {
             let forbalance = balancetobecollectedonlevel * 0.1;
             const forbalancetobecollected = balancetobecollectedonlevel * 0.9;
             const levelquerry=`SELECT id FROM users WHERE level=?`
-const allUsersOnSameLevel=queryDatabase(levelquerry,[level])
+const allUsersOnSameLevel=await queryDatabase(levelquerry,[level])
 console.log(allUsersOnSameLevel);
             const userToLevelUp = response.sort((a, b) => a.id - b.id)[0];
 
