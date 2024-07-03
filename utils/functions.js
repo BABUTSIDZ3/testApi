@@ -13,13 +13,12 @@ export async function queryDatabase(sql, values) {
   }
 }
 
-
 export async function levelup(req, res) {
   try {
     const runLevelUp = async () => {
       try {
         const sql_query =
-          "SELECT id,balance,balancetobecollected,subscription,paydonlevel FROM users";
+          "SELECT id,balance,balancetobecollected,subscription,paydonlevel,level FROM users";
         const results = await queryDatabase(sql_query);
         const filteredResult = results.filter(
           (user) => user.payment_status !== 0
