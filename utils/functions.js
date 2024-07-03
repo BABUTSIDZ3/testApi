@@ -17,6 +17,7 @@ export async function levelup(req, res) {
   try {
     const runLevelUp = async () => {
       try {
+        let round=0
         const sql_query =
           "SELECT id,balance,balancetobecollected,subscription,paydonlevel,level FROM users";
         const results = await queryDatabase(sql_query);
@@ -37,6 +38,7 @@ export async function levelup(req, res) {
         for (const level of Object.keys(groupedResult)) {
           const response = groupedResult[level];
           if (response.length === 2) {
+            round=1
             const totalBalancetobecollected = response.reduce(
               (total, user) => total + Number(user.balancetobecollected),
               0
@@ -44,7 +46,7 @@ export async function levelup(req, res) {
             const balancetobecollectedonlevel = totalBalancetobecollected * 0.8;
             let forbalance = balancetobecollectedonlevel * 0.1;
             const forbalancetobecollected = balancetobecollectedonlevel * 0.9;
-
+console.log(groupedResult);
             const userToLevelUp = response.sort((a, b) => a.id - b.id)[0];
 
             if (userToLevelUp.subscription === 0) {
@@ -58,6 +60,8 @@ export async function levelup(req, res) {
             await queryDatabase(updateUserQuery);
           }
         }
+        if(round!==0)
+          await runLevelUp()
       } catch (error) {
         res.send(error.message);
       }
