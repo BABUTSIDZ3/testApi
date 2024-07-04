@@ -1,4 +1,4 @@
-import express, { query } from "express";
+import express from "express";
 import { queryDatabase } from "../utils/functions.js";
 
 const usersRouter = express.Router();
@@ -43,7 +43,7 @@ usersRouter.get("/:token", async (req, res) => {
   const { token } = req.params;
   try {
     const sql_query = `SELECT * FROM users WHERE token = ?`;
-    const notificationsQuerry=`SELECT * FROM notifications WHERE userId = ?`;
+    const notificationsQuerry=`SELECT notification FROM notifications WHERE userId = ?`;
 
     const data = await queryDatabase(sql_query, [token]);
      if (data[0]) {

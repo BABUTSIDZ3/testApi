@@ -26,7 +26,8 @@ const isReferralCodeUnique = async (code) => {
 
 authRouter.post("/register", async (req, res) => {
   try {
-    let { username, password, email, avatar, referralCode } = req.body;
+    let { username, password, email, avatar, referralCode, language } =
+      req.body;
 
     // Set default avatar based on avatar value
     avatar =
@@ -43,7 +44,13 @@ authRouter.post("/register", async (req, res) => {
       [username]
     );
     if (existingUserName.length) {
-      return res.status(400).json("Username already taken");
+      return res
+        .status(400)
+        .json(
+          language == "EN"
+            ? "Username already taken"
+            : "სახელი უკვე გამოყენებულია"
+        );
     }
 
     // Check if email is already taken
@@ -52,7 +59,11 @@ authRouter.post("/register", async (req, res) => {
       [email]
     );
     if (existingUserEmail.length) {
-      return res.status(400).json("Email already taken");
+      return res
+        .status(400)
+        .json(
+          language == "EN" ? "Email already taken" : "მეილი უკვე გამოყენებულია"
+        );
     }
 
     // Generate a unique 10-digit referral code
@@ -73,7 +84,13 @@ authRouter.post("/register", async (req, res) => {
       if (referrerResult.length > 0) {
         referrer = referrerResult[0].id;
       } else {
-        return res.status(400).json("Invalid referral code");
+        return res
+          .status(400)
+          .json(
+            language == "EN"
+              ? "Invalid referral code"
+              : "რეფერალის კოდი არასოწრია"
+          );
       }
     }
 
@@ -98,7 +115,10 @@ authRouter.post("/register", async (req, res) => {
         avatar,
         referralCode: uniqueReferralCode,
       },
-      message: "User registered successfully",
+      message:
+        language == "EN"
+          ? "you registered successfully"
+          : "თქვენ გაიარეთ რეგისტრაცია",
     });
   } catch (error) {
     console.error("Error:", error.message);
@@ -106,11 +126,10 @@ authRouter.post("/register", async (req, res) => {
   }
 });
 
-
 // Verify After Registration
 authRouter.post("/register/verify", async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, language } = req.body;
     const findUserQuery = `SELECT id FROM users WHERE email = ?`;
     const result = await queryDatabase(findUserQuery, [email]);
 
@@ -150,7 +169,11 @@ authRouter.post("/register/verify", async (req, res) => {
 
       try {
         await transporter.sendMail(mailOptions);
-        res.send("email sent successfully");
+        res.send(
+          language == "EN"
+            ? "email sent successfully"
+            : "მეილი წარმატებით გაიგზავნა"
+        );
       } catch (error) {
         res.status(500).send("Email not sent");
       }
@@ -159,7 +182,9 @@ authRouter.post("/register/verify", async (req, res) => {
         await queryDatabase(timeoutQuery, [email]);
       }, 120000);
     } else {
-      res.status(404).send("Email not found");
+      res
+        .status(404)
+        .send(language == "EN" ? "Email not found" : "მეილი ვერ მოიძებნა");
     }
   } catch (error) {
     console.error("Error:", error);
@@ -170,16 +195,24 @@ authRouter.post("/register/verify", async (req, res) => {
 // Verify with Code
 authRouter.put("/register/verify", async (req, res) => {
   try {
-    const { verificationnumber } = req.body;
+    const { verificationnumber, language } = req.body;
     const findUserQuery = `SELECT id FROM users WHERE verificationnumber = ?`;
     const result = await queryDatabase(findUserQuery, [verificationnumber]);
 
     if (result.length) {
       const updateQuery = `UPDATE users SET verifyed = "true", verificationnumber = NULL WHERE id = ?`;
       await queryDatabase(updateQuery, [result[0].id]);
-      res.send("verified_success");
+      res.send(
+        language == "EN" ? "verified_success" : "ვერიფიკაცია წარმატებით გაიარეთ"
+      );
     } else {
-      res.status(404).send("Incorrect verification code");
+      res
+        .status(404)
+        .send(
+          language == "EN"
+            ? "Incorrect verification code"
+            : "ვერიფიკაციის კოდი არასწორია"
+        );
     }
   } catch (error) {
     console.error("Error:", error);
@@ -190,7 +223,7 @@ authRouter.put("/register/verify", async (req, res) => {
 // Login
 authRouter.post("/login", async (req, res) => {
   try {
-    const { usernameOrEmail, password } = req.body;
+    const { usernameOrEmail, password, language } = req.body;
     const findUserQuery = `
       SELECT id, token, verifyed, username, password, payment_status, email FROM users
       WHERE username = ? OR email = ?`;
@@ -225,10 +258,22 @@ authRouter.post("/login", async (req, res) => {
         await queryDatabase(updateTokenQuery, [token, user.id]);
         res.json({ token });
       } else {
-        res.status(401).send("Username/email or password is incorrect");
+        res
+          .status(401)
+          .send(
+            language == "EN"
+              ? "Username/email or password is incorrect"
+              : "მომხმარებელი ან პაროლი არასწორია"
+          );
       }
     } else {
-      res.status(401).send("Username/email or password is incorrect");
+      res
+        .status(401)
+        .send(
+          language == "EN"
+            ? "Username/email or password is incorrect"
+            : "მომხმარებელი ან პაროლი არასწორია"
+        );
     }
   } catch (error) {
     console.error("Error:", error);
@@ -240,7 +285,7 @@ authRouter.post("/login", async (req, res) => {
 authRouter.post("/forgotpassword", async (req, res) => {
   try {
     // Destructure request body
-    const { email } = req.body;
+    const { email ,language} = req.body;
 
     // Check if email exists in the database
     const findUserQuery = `SELECT id FROM users WHERE email = ?`;
@@ -285,9 +330,9 @@ authRouter.post("/forgotpassword", async (req, res) => {
 
       await transporter.sendMail(mailOptions);
 
-      res.send("email sent successfully");
+      res.send(language=="EN"?"email sent successfully":"მეილი წარმატებით გაიგზავნა");
     } else {
-      res.status(404).send("Email not found");
+      res.status(404).send(language=="EN"?"Email not found":"მეილი ვერ მოიძებნა");
     }
   } catch (error) {
     console.error("Error:", error);
@@ -298,7 +343,7 @@ authRouter.post("/forgotpassword", async (req, res) => {
 authRouter.put("/forgotpassword", async (req, res) => {
   try {
     // Destructure request body
-    const { verificationCode, newPassword } = req.body;
+    const { verificationCode, newPassword ,language} = req.body;
     // Hash the new password
     const passwordHash = await bcrypt.hash(newPassword, Number(saltrounds));
 
@@ -311,9 +356,9 @@ authRouter.put("/forgotpassword", async (req, res) => {
       const updateQuery = `UPDATE users SET password = ?, passverificationnumber = NULL WHERE passverificationnumber = ?`;
       await queryDatabase(updateQuery, [passwordHash, verificationCode]);
 
-      res.send("successfully updated");
+      res.send(language=="EN"?"successfully updated":"პაროლი წარმატებით განახლდა");
     } else {
-      res.status(404).send("Incorrect verification code");
+      res.status(404).send(language=="EN"?"Incorrect verification code":"ვერიფიკაციის კოდი არასწორია");
     }
   } catch (error) {
     console.error("Error:", error);
