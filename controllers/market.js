@@ -361,7 +361,7 @@ marketRouter.post("/buy-help", async (req, res) => {
         res.send(
           language == "EN"
             ? "You have successfully purchased a help"
-            : "თქვენ წარმატებიტ შეიძინეთ დახმარება"
+            : "თქვენ წარმატებით შეიძინეთ დახმარება"
         );
       }
     }
@@ -376,7 +376,7 @@ marketRouter.post("/buy-x-card", async (req, res) => {
     const [gameStatus] = await queryDatabase(gameIsStartedQuery);
 
     if (gameStatus.started_game == 0) {
-      const { email, which_x } = req.body; // Define which_x here
+      const { email, which_x ,language} = req.body; // Define which_x here
       const userQuery = `SELECT coin, x_card_with_coin FROM users WHERE email=?`;
       const ticketQuery = `SELECT * FROM market WHERE product_name=?`;
 
@@ -401,10 +401,10 @@ marketRouter.post("/buy-x-card", async (req, res) => {
           Number(ticketInfo.product_price_in_coin),
           email,
         ]);
-        res.send(`You have successfully purchased a ${which_x} coins`);
+        res.send(language=="EN"?`You have successfully purchased a ${which_x} coins`:"თქვენ წარმატებით შეიძინეთ ქოინების მომატების ქარდი");
       }
     } else {
-      const { email, which_x } = req.body; // Define which_x here as well
+      const { email, which_x ,language} = req.body; // Define which_x here as well
       const userQuery = `SELECT balance,x_card_with_money FROM users WHERE email=?`;
       const ticketQuery = `SELECT * FROM market WHERE product_name=?`;
 
@@ -412,10 +412,16 @@ marketRouter.post("/buy-x-card", async (req, res) => {
       const [userInfo] = await queryDatabase(userQuery, [email]);
 
       if (!userInfo || userInfo.balance < ticketInfo.product_price_in_usd) {
-        return res.status(400).send("You don't have enough balance");
+        return res.status(400).send(language=="EN"?"You don't have enough balance":"თქვენ არ გაქვთ საკმარისი თანხა ბალანსზე");
       }
       if (userInfo.x_card_with_money > 9) {
-        res.status(400).send(`you can't buy more x-card`);
+ res
+   .status(400)
+   .send(
+     language == "EN"
+       ? `you can't buy more x-card`
+       : "თქვენ აღარ შეგიძლიათ შეიძინოთ ქოინების მოსამატებელი ქარდი"
+   );
       } else {
         const userUpdateQuery = `UPDATE users SET ${which_x} = ${which_x} + ?, balance = balance - ?,x_card_with_money=x_card_with_money+1 WHERE email=?`;
         await queryDatabase(userUpdateQuery, [
@@ -423,7 +429,11 @@ marketRouter.post("/buy-x-card", async (req, res) => {
           Number(ticketInfo.product_price_in_usd),
           email,
         ]);
-        res.send(`You have successfully purchased a ${which_x} coins`);
+res.send(
+  language == "EN"
+    ? `You have successfully purchased a ${which_x} coins`
+    : "თქვენ წარმატებით შეიძინეთ ქოინების მომატების ქარდი"
+);
       }
     }
   } catch (error) {
