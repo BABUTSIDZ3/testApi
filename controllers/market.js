@@ -23,7 +23,8 @@ function generateWhereClause(gameStatus) {
   return ` WHERE product_name NOT IN (${excludedProductsString})`;
 }
 
-marketRouter.get("/", async (req, res) => {
+marketRouter.post("/", async (req, res) => {
+ const {language}=req.body
   // Query to fetch the game status from the admin table
   const gameIsStartedQuery = `SELECT started_game FROM admin`;
   // Execute the query to get the game status
@@ -34,9 +35,13 @@ marketRouter.get("/", async (req, res) => {
   let selectFields;
   // Determine which fields to select based on the game status
   if (gameStatus === 1) {
-    selectFields = "product_name, product_image, product_price_in_usd,description,id";
+    selectFields = `product_name, product_image, product_price_in_usd,id, ${
+      language == "GE" ? "description_ge" : "description_en"
+    }`;
   } else {
-    selectFields = "product_name, product_image, product_price_in_coin,description,id";
+    selectFields = `product_name, product_image, product_price_in_coin,id, ${
+      language == "GE" ? "description_ge" : "description_en"
+    }`;
   }
 
   // Construct the base query to select items from the market table
@@ -53,7 +58,7 @@ marketRouter.get("/", async (req, res) => {
 });
 
 marketRouter.post("/buy-gift-card", async (req, res) => {
-  const { email, card_id } = req.body;
+  const { email, card_id, language } = req.body;
   const userinfoQuerry = `SELECT coin,gift_card_id FROM users WHERE email=?`;
   const cardInfoQuerry = `SELECT product_price_in_coin,product_quantity FROM market WHERE id=?`;
   const userUpdateQuerry = `UPDATE users SET gift_card_id=? WHERE email=?`;
@@ -63,21 +68,39 @@ marketRouter.post("/buy-gift-card", async (req, res) => {
     cardInfoQuerry,
     [card_id]
   );
-  if ((gift_card_id == 0)) {
-    res.status(400).send("you alredy bought a gift card");
+  if (gift_card_id == 0) {
+    res
+      .status(400)
+      .send(
+        language == "EN"
+          ? "you alredy bought a gift card"
+          : "თქვენ უკვე შეძენილი გაქვთ სასაჩუქრე ვაუჩერი"
+      );
   } else {
     if (product_quantity > 0) {
       if (coin < product_price_in_coin) {
-        res.status(400).send("you do not have enough coin");
+        res
+          .status(400)
+          .send(
+            language == "EN"
+              ? "you do not have enough coin"
+              : "თქვენ არ გაქვთ საკმარისი ქოინი"
+          );
       } else {
         await queryDatabase(userUpdateQuerry, [card_id, email]);
         await queryDatabase(updateQuantityQuerry, [card_id]);
         res.send(
-          "You have successfully purchased a gift card to the email you are registered with. You will receive a message within 24 hours so that you can activate it."
+          language == "EN"
+            ? "You have successfully purchased a gift card to the email you are registered with. You will receive a message within 24 hours so that you can activate it."
+            : "თქვენ წარმატებით შეიძინეთ სასაჩუიქრე ვაუჩერი,24 საათის განმავლობაში მიიღებთ ვაუჩერს მეილზე, რომლითაც ხართ რეგისტრირებული"
         );
       }
     } else {
-      res.send("The product is no longer in stock");
+      res.send(
+        language == "EN"
+          ? "The product is no longer in stock"
+          : "პროდუქტის რაოდენობა ამოიწურა"
+      );
     }
   }
 });
@@ -88,7 +111,7 @@ marketRouter.post("/buy-ticket", async (req, res) => {
     const [gameStatus] = await queryDatabase(gameIsStartedQuery);
 
     if (gameStatus.started_game == 0) {
-      const { email } = req.body;
+      const { email, language } = req.body;
       const userQuery = `SELECT coin, balance FROM users WHERE email=?`;
       const ticketQuery = `SELECT * FROM market WHERE product_name=?`;
 
@@ -96,7 +119,13 @@ marketRouter.post("/buy-ticket", async (req, res) => {
       const [userInfo] = await queryDatabase(userQuery, [email]);
 
       if (!userInfo || userInfo.coin < ticketInfo.product_price_in_coin) {
-        return res.status(400).send("You don't have enough coins");
+        return res
+          .status(400)
+          .send(
+            language == "EN"
+              ? "You don't have enough coins"
+              : "თქვენ არ გაქვთ საკმარისი ქოინები"
+          );
       }
 
       const userUpdateQuery = `UPDATE users SET tickets = tickets + ?, coin = coin - ? WHERE email=?`;
@@ -106,7 +135,11 @@ marketRouter.post("/buy-ticket", async (req, res) => {
         email,
       ]);
 
-      res.send("You have successfully purchased a ticket");
+      res.send(
+        language == "EN"
+          ? "You have successfully purchased a ticket"
+          : "თქვენ წარმატებით შეიძინეთ გათამაშების ბილეთი"
+      );
     } else {
       const { email } = req.body;
       const userQuery = `SELECT balance FROM users WHERE email=?`;
@@ -116,7 +149,13 @@ marketRouter.post("/buy-ticket", async (req, res) => {
       const [userInfo] = await queryDatabase(userQuery, [email]);
 
       if (!userInfo || userInfo.balance < ticketInfo.product_price_in_usd) {
-        return res.status(400).send("You don't have enough balance");
+        return res
+          .status(400)
+          .send(
+            language == "EN"
+              ? "You don't have enough balance"
+              : "თქვენ არ გაქვთ საკმარისი თანხა ბალანსზე"
+          );
       }
 
       const userUpdateQuery = `UPDATE users SET tickets = tickets + ?, balance = balance - ? WHERE email=?`;
@@ -126,7 +165,11 @@ marketRouter.post("/buy-ticket", async (req, res) => {
         email,
       ]);
 
-      res.send("You have successfully purchased a ticket");
+      res.send(
+        language == "EN"
+          ? "You have successfully purchased a ticket"
+          : "თქვენ წარმატებით შეიძინეთ გათამაშების ბილეთი"
+      );
     }
   } catch (error) {
     res.status(500).send(error.message);
@@ -135,7 +178,7 @@ marketRouter.post("/buy-ticket", async (req, res) => {
 // Assuming you have already defined and initialized your marketRouter and queryDatabase function
 
 marketRouter.post("/exchange-to-money", async (req, res) => {
-  const { email } = req.body;
+  const { email, language } = req.body;
 
   // Check if the user is already in the process of exchanging
   const checkExchangingQuery = `SELECT exchanging_to_money FROM users WHERE email=?`;
@@ -146,7 +189,13 @@ marketRouter.post("/exchange-to-money", async (req, res) => {
     userExchangingInfo.length > 0 &&
     userExchangingInfo[0].exchanging_to_money === 1
   ) {
-    return res.status(400).send("You have already activated this service");
+    return res
+      .status(400)
+      .send(
+        language == "EN"
+          ? "You have already activated this service"
+          : "თქვენ უკვე გააქტიურებული გაქვთ ეს სერვისი"
+      );
   }
 
   // Continue with the exchange logic
@@ -162,7 +211,13 @@ marketRouter.post("/exchange-to-money", async (req, res) => {
     userInfo.length === 0 ||
     userInfo[0].coin < productInfo[0].product_price_in_coin
   ) {
-    return res.status(400).send("You don't have enough coins");
+    return res
+      .status(400)
+      .send(
+        language == "EN"
+          ? "You don't have enough coins"
+          : "თქვენ არ გაქვთ საკმარისი ქოინები"
+      );
   } else {
     await queryDatabase(exchangingQuery, [
       1,
@@ -170,7 +225,9 @@ marketRouter.post("/exchange-to-money", async (req, res) => {
       email,
     ]);
     return res.send(
-      "You have successfully cashed out the coin, the amount will be reflected in the account within 24 hours"
+      language == "EN"
+        ? "You have successfully cashed out the coin, the amount will be reflected in the account within 24 hours"
+        : "თქვენ წარმატებით გადაცვალეთ თქვენი ქოინები თანხაში, თანხა დაგერიცხებათ 24 საათის განმავლობაში"
     );
   }
 });
@@ -180,24 +237,24 @@ marketRouter.post("/buy-health", async (req, res) => {
     const gameIsStartedQuery = `SELECT started_game FROM admin`;
     const [gameStatus] = await queryDatabase(gameIsStartedQuery);
     if (gameStatus.started_game == 0) {
-      const { email } = req.body;
+      const { email ,language} = req.body;
       const userQuery = `SELECT coin, balance,health_with_coin FROM users WHERE email=?`;
       const ticketQuery = `SELECT * FROM market WHERE product_name=?`;
       const [ticketInfo] = await queryDatabase(ticketQuery, ["health"]);
       const [userInfo] = await queryDatabase(userQuery, [email]);
       if (!userInfo || userInfo.coin < ticketInfo.product_price_in_coin) {
-        return res.status(400).send("You don't have enough coins");
+        return res.status(400).send(language=="EN"?"You don't have enough coins":"თქვენ არ გაქვთ საკმარისი ქოინები");
       }
       const userUpdateQuery = `UPDATE users SET health = health + ?, coin = coin - ?,health_with_coin=health_with_coin+1 WHERE email=?`;
       if (userInfo.health_with_coin > 9) {
-        res.status(400).send(`you can't buy more health`);
+        res.status(400).send(language=="EN"?`you can't buy more health`:"თქვენ აღარ შეგიძლიათ შეიძინოთ მეტი სიცოცხლე");
       } else {
         await queryDatabase(userUpdateQuery, [
           1,
           Number(ticketInfo.product_price_in_coin),
           email,
         ]);
-        res.send("You have successfully purchased a health");
+        res.send(language=="EN"?"You have successfully purchased a health":"თქვენ წარმატებით შეიძინეთ სიცოცხლე");
       }
     } else {
       const { email } = req.body;
@@ -208,19 +265,29 @@ marketRouter.post("/buy-health", async (req, res) => {
       const [userInfo] = await queryDatabase(userQuery, [email]);
 
       if (!userInfo || userInfo.balance < ticketInfo.product_price_in_usd) {
-        return res.status(400).send("You don't have enough balance");
+        return res.status(400).send(language=="EN"?"You don't have enough balance":"თქვენ არ გაქვთ საკმარისი ქოინი სიცოცხლის შესაძენად");
       }
 
       const userUpdateQuery = `UPDATE users SET health = health + ?, balance = balance - ?,health_with_money=health_with_money+1 WHERE email=?`;
       if (userInfo.health_with_money > 9) {
-       res.status(400).send(`you can't buy more health`);
+        res
+          .status(400)
+          .send(
+            language == "EN"
+              ? `you can't buy more health`
+              : "თქვენ აღარ შეგიძლიათ შეიძინოთ მეტი სიცოცხლე"
+          );
       } else {
         await queryDatabase(userUpdateQuery, [
           1,
           Number(ticketInfo.product_price_in_usd),
           email,
         ]);
-        res.send("You have successfully purchased a health");
+        res.send(
+          language == "EN"
+            ? "You have successfully purchased a health"
+            : "თქვენ წარმატებით შეიძინეთ სიცოცხლე"
+        );
       }
     }
   } catch (error) {
@@ -234,7 +301,7 @@ marketRouter.post("/buy-help", async (req, res) => {
     const [gameStatus] = await queryDatabase(gameIsStartedQuery);
 
     if (gameStatus.started_game == 0) {
-      const { email } = req.body;
+      const { email ,language} = req.body;
       const userQuery = `SELECT coin, balance,help_with_coin FROM users WHERE email=?`;
       const ticketQuery = `SELECT * FROM market WHERE product_name=?`;
 
@@ -242,12 +309,12 @@ marketRouter.post("/buy-help", async (req, res) => {
       const [userInfo] = await queryDatabase(userQuery, [email]);
 
       if (!userInfo || userInfo.coin < ticketInfo.product_price_in_coin) {
-        return res.status(400).send("You don't have enough coins");
+        return res.status(400).send(language=="EN"?"You don't have enough coins":"თქვენ არ გაქვთ საკმარისი ქოინი");
       }
 
       const userUpdateQuery = `UPDATE users SET help = help + ?, coin = coin - ? ,help_with_coin=help_with_coin+1 WHERE email=?`;
       if (userInfo.help_with_coin > 9) {
-        res.status(400).send(`you can't buy more help`);
+        res.status(400).send(language=="EN"?`you can't buy more help`:"თქვენ არ შეგიძლიათ იყიდოთ მეტი სიცოცხლე");
       } else {
         await queryDatabase(userUpdateQuery, [
           1,
@@ -255,7 +322,7 @@ marketRouter.post("/buy-help", async (req, res) => {
           email,
         ]);
 
-        res.send("You have successfully purchased a help");
+        res.send(language=="EN"?"You have successfully purchased a help":"თქვენ წარმატებიტ შეიძინეთ დახმარება");
       }
     } else {
       const { email } = req.body;
@@ -266,12 +333,24 @@ marketRouter.post("/buy-help", async (req, res) => {
       const [userInfo] = await queryDatabase(userQuery, [email]);
 
       if (!userInfo || userInfo.balance < ticketInfo.product_price_in_usd) {
-        return res.status(400).send("You don't have enough balance");
+        return res
+          .status(400)
+          .send(
+            language == "EN"
+              ? "You don't have enough balance"
+              : "თქვენ არ გაქვთ საკმარისი თანხა ბალანსზე"
+          );
       }
 
       const userUpdateQuery = `UPDATE users SET help = help + ?, balance = balance - ?,help_with_money=help_with_money+1 WHERE email=?`;
       if (userInfo.help_with_money > 9) {
-       res.status(400).send(`you can't buy more help`);
+         res
+           .status(400)
+           .send(
+             language == "EN"
+               ? `you can't buy more help`
+               : "თქვენ არ შეგიძლიათ იყიდოთ მეტი სიცოცხლე"
+           );
       } else {
         await queryDatabase(userUpdateQuery, [
           1,
@@ -279,7 +358,11 @@ marketRouter.post("/buy-help", async (req, res) => {
           email,
         ]);
 
-        res.send("You have successfully purchased a help");
+        res.send(
+          language == "EN"
+            ? "You have successfully purchased a help"
+            : "თქვენ წარმატებიტ შეიძინეთ დახმარება"
+        );
       }
     }
   } catch (error) {
@@ -301,11 +384,17 @@ marketRouter.post("/buy-x-card", async (req, res) => {
       const [userInfo] = await queryDatabase(userQuery, [email]);
 
       if (!userInfo || userInfo.coin < ticketInfo.product_price_in_coin) {
-        return res.status(400).send("You don't have enough coins");
+        return res
+          .status(400)
+          .send(
+            language == "EN"
+              ? "You don't have enough coins"
+              : "თქვენ არ გაქვთ საკმარისი ქოინები"
+          );
       }
       const userUpdateQuery = `UPDATE users SET ${which_x} = ${which_x} + ?, coin = coin - ?,x_card_with_coin=x_card_with_coin+1 WHERE email=?`;
       if (userInfo.x_card_with_coin > 9) {
-        res.status(400).send(`you can't buy more x-card`);
+        res.status(400).send(language=="EN"?`you can't buy more x-card`:"თქვენ აღარ შეგიძლიათ შეიძინოთ ქოინების მოსამატებელი ქარდი");
       } else {
         await queryDatabase(userUpdateQuery, [
           1,
@@ -326,7 +415,7 @@ marketRouter.post("/buy-x-card", async (req, res) => {
         return res.status(400).send("You don't have enough balance");
       }
       if (userInfo.x_card_with_money > 9) {
-       res.status(400).send(`you can't buy more x-card`);
+        res.status(400).send(`you can't buy more x-card`);
       } else {
         const userUpdateQuery = `UPDATE users SET ${which_x} = ${which_x} + ?, balance = balance - ?,x_card_with_money=x_card_with_money+1 WHERE email=?`;
         await queryDatabase(userUpdateQuery, [
@@ -339,7 +428,7 @@ marketRouter.post("/buy-x-card", async (req, res) => {
     }
   } catch (error) {
     res.status(500).send(error.message);
-     console.log(error);
+    console.log(error);
   }
 });
 
