@@ -35,7 +35,7 @@ questionsRouter.post("/active", async (req, res) => {
       const activeQuestions = await queryDatabase(getActiveQuestionQuery, [1]);
 
       // Retrieve the seen questions for the user
-      const getUserInfoQuery = `SELECT seenquestions, x1_25_coin, x1_5_coin, x2_coin FROM users WHERE id = ?`;
+      const getUserInfoQuery = `SELECT seenquestions, x1_25_point, x1_5_point, x2_point FROM users WHERE id = ?`;
       const [userInfoResult] = await queryDatabase(getUserInfoQuery, [user_id]);
 
       const userSeenQuestions = userInfoResult.seenquestions
@@ -109,11 +109,11 @@ questionsRouter.post("/active", async (req, res) => {
       // Shuffle the answers array
       answers = shuffleArray(answers);
 
-      // Prepare avaialbe_x_coins array
-      const availableCoins = [];
-      if (userInfoResult.x1_25_coin > 0) availableCoins.push("x1_25_coin");
-      if (userInfoResult.x1_5_coin > 0) availableCoins.push("x1_5_coin");
-      if (userInfoResult.x2_coin > 0) availableCoins.push("x2_coin");
+      // Prepare avaialbe_x_points array
+      const availablePoints = [];
+      if (userInfoResult.x1_25_point > 0) availablePoints.push("x1_25_point");
+      if (userInfoResult.x1_5_point > 0) availablePoints.push("x1_5_point");
+      if (userInfoResult.x2_point > 0) availablePoints.push("x2_point");
 
       res.send({
         question:
@@ -122,7 +122,7 @@ questionsRouter.post("/active", async (req, res) => {
             : randomQuestion.question_EN,
         question_id: randomQuestion.id,
         answers: answers,
-        avaialbe_x_coins: availableCoins,
+        avaialbe_x_points: availablePoints,
       });
     } catch (error) {
       console.error("Error:", error);
@@ -144,24 +144,24 @@ function shuffleArray(array) {
 questionsRouter.post("/answer", async (req, res) => {
   const { question_id, answer, time, user_id, use_x, language } = req.body;
   const questionQuerry = `SELECT right_answer_${language} FROM questions WHERE id = ?`;
-  const coinAddQuerry = `UPDATE users SET coin = coin + ? WHERE id = ?`;
+  const pointAddQuerry = `UPDATE users SET point = point + ? WHERE id = ?`;
   const incorrectAnswerQuerry = `UPDATE users SET health = health-1 WHERE id = ?`;
   const question = await queryDatabase(questionQuerry, [question_id]);
-  let coinToAdd;
+  let pointToAdd;
   if (use_x == 0) {
-    coinToAdd = time;
+    pointToAdd = time;
   } else {
-    coinToAdd = time * use_x;
-    let coinColumn;
-    if (use_x == "x1_25_coin") {
-      coinColumn = "x1_25_coin";
-    } else if (use_x == "x1_5_coin") {
-      coinColumn = "x1_5_coin";
-    } else if (use_x == "x2_coin") {
-      coinColumn = "x2_coin";
+    pointToAdd = time * use_x;
+    let pointColumn;
+    if (use_x == "x1_25_point") {
+      pointColumn = "x1_25_point";
+    } else if (use_x == "x1_5_point") {
+      pointColumn = "x1_5_point";
+    } else if (use_x == "x2_point") {
+      pointColumn = "x2_point";
     }
-    const subtractCoinQuerry = `UPDATE users SET ${coinColumn} = ${coinColumn} - 1 WHERE id = ?`;
-    await queryDatabase(subtractCoinQuerry, [user_id]);
+    const subtractPointQuerry = `UPDATE users SET ${pointColumn} = ${pointColumn} - 1 WHERE id = ?`;
+    await queryDatabase(subtractPointQuerry, [user_id]);
   }
   if (
     language == "GE"
@@ -169,7 +169,7 @@ questionsRouter.post("/answer", async (req, res) => {
       : question[0].right_answer_EN === answer
   ) {
     res.send("Your answer is correct");
-    await queryDatabase(coinAddQuerry, [coinToAdd, user_id]);
+    await queryDatabase(pointAddQuerry, [pointAddQuerry, user_id]);
   } else {
     await queryDatabase(incorrectAnswerQuerry, [user_id]);
     res.send("Your answer is not correct");
