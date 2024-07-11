@@ -49,7 +49,7 @@ usersRouter.get("/:token", async (req, res) => {
      if (data[0]) {
       const notifications = await queryDatabase(notificationsQuerry, [data[0].id]);
        const {email} = data[0]
-       const transactionsQuerry = `SELECT date,status,amount,trasaction_info FROM transactions WHERE user_email=?`;
+       const transactionsQuerry = `SELECT date,status,amount,transaction_info FROM transactions WHERE user_email=?`;
        const transactions = await queryDatabase(transactionsQuerry, [email]);
          const response = {
            userData: data,

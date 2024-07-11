@@ -81,7 +81,7 @@ fromAdminRouter.post("/subscription", async (req, res) => {
     return data;
   }
   const { email } = req.body;
-  const transactionQuerry = `INSERT INTO transactions (amount, user_email,date,trasaction_info) VALUES (?, ?, ?,?)`;
+  const transactionQuerry = `INSERT INTO transactions (amount, user_email,date,transaction_info) VALUES (?, ?, ?,?)`;
   const updateQuery = `UPDATE users SET subscription=? WHERE email=?`;
   const afterOneMonthQuerry = `UPDATE users SET subscription=? WHERE email=?`;
   try {
@@ -126,7 +126,7 @@ fromAdminRouter.post("/registration", async (req, res) => {
     const referrerQuery = `SELECT referrer FROM users WHERE email=?`;
     const referrer = await queryDatabase(referrerQuery, [email]);
 
-    if (referrer.length) {
+    if (referrer.referrer && referrer.referrer!==undefined) {
       const updateReferralQuery = `UPDATE users SET balance=balance+1 WHERE id=?`;
       const getUserQuery = `SELECT id FROM users WHERE id=?`;
       const userResult = await queryDatabase(getUserQuery, [
@@ -139,9 +139,10 @@ fromAdminRouter.post("/registration", async (req, res) => {
         userResult[0].id,
       ]);
       await queryDatabase(updateReferralQuery, [referrer[0].referrer]);
+    
     }
 
-    const transactionQuery = `INSERT INTO transactions (amount, user_email, date, transaction_info) VALUES (?, ?, ?, ?)`;
+    const transactionQuery = `INSERT INTO transactions (amount, user_email, date,transaction_info) VALUES (?, ?, ?, ?)`;
     const updateQuery = `UPDATE users SET payment_status=?, subscription=? WHERE email=?`;
     const afterOneMonthQuery = `UPDATE users SET subscription=? WHERE email=?`;
 
@@ -165,7 +166,7 @@ fromAdminRouter.post("/registration", async (req, res) => {
       res.send("Updated successfully");
     }
   } catch (error) {
-    console.error("Failed to update payment status", error);
+  
     res.status(400).send("Failed to update payment status");
   }
 });
@@ -353,7 +354,7 @@ fromAdminRouter.post("/withdraw", async (req, res) => {
 
   // Query user's balance
   const getUserBalanceQuery = `SELECT balance FROM users WHERE email = ?`;
-  const transactionQuerry = `INSERT INTO transactions (amount, user_email,date,trasaction_info) VALUES (?, ?, ?,?)`;
+  const transactionQuerry = `INSERT INTO transactions (amount, user_email,date,transaction_info) VALUES (?, ?, ?,?)`;
   const balanceResult = await queryDatabase(getUserBalanceQuery, [email]);
 
   if (balanceResult.length === 0) {
@@ -404,7 +405,7 @@ fromAdminRouter.post("/deposit", async (req, res) => {
     }
     return data;
   }
-  const transactionQuerry = `INSERT INTO transactions (amount, user_email,date,trasaction_info) VALUES (?, ?, ?,?)`;
+  const transactionQuerry = `INSERT INTO transactions (amount, user_email,date,transaction_info) VALUES (?, ?, ?,?)`;
   const userQuerry = `UPDATE users SET balance=balance+? WHERE email=?`;
   await queryDatabase(userQuerry, [amount, email]);
   await queryDatabase(transactionQuerry, [amount, email, date, "deposit"]);
