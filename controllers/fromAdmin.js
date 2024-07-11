@@ -108,71 +108,68 @@ fromAdminRouter.post("/subscription", async (req, res) => {
 });
 
 fromAdminRouter.post("/registration", async (req, res) => {
-  var today = new Date();
-  var day = today.getDate() + "";
-  var month = today.getMonth() + 1 + "";
-  var year = today.getFullYear() + "";
-  var hour = today.getHours() + "";
-  var minutes = today.getMinutes() + "";
-  var seconds = today.getSeconds() + "";
-
-  day = checkZero(day);
-  month = checkZero(month);
-  year = checkZero(year);
-  hour = checkZero(hour);
-  minutes = checkZero(minutes);
-  seconds = checkZero(seconds);
-
-  const date =
-    day + "/" + month + "/" + year + " " + hour + ":" + minutes + ":" + seconds;
-
-  function checkZero(data) {
-    if (data.length == 1) {
-      data = "0" + data;
-    }
-    return data;
-  }
-  const { email } = req.body;
-  const referrerQuerry=`SELECT referrer FROM users WHERE email=?`
-  const referrer=await queryDatabase(referrerQuerry,[email])
-if(referrer.length){
-  const updateReferalQuerry=`UPDATE users SET balance=balance+1 WHERE id=?`
-  const getUserQuerry=`SELECT id FROM users WHERE id=?`
-  const userResult = await queryDatabase(getUserQuerry, [referrer[0].referrer]);
-const insertNotificationQuerry=`INSERT INTO notifications (notification,userId) VALUES (?,?)`
-await queryDatabase(insertNotificationQuerry, [
-  "თქვენი რეფერალური კოდიტ დარეგისტრირდა მომხმარებელი და თქვენ დარეგიცხატ 1 დოლარი",
-  userResult[0].id,
-]);
-  await queryDatabase(updateReferalQuerry, [referrer[0].referrer]);
-}
-
-  const transactionQuerry = `INSERT INTO transactions (amount, user_email,date,trasaction_info) VALUES (?, ?, ?,?)`;
-  const updateQuery = `UPDATE users SET payment_status=?, subscription=? WHERE email=?`;
-  const afterOneMonthQuerry = `UPDATE users SET subscription=? WHERE email=?`;
   try {
+    const today = new Date();
+    const day = checkZero(today.getDate() + "");
+    const month = checkZero(today.getMonth() + 1 + "");
+    const year = today.getFullYear() + "";
+    const hour = checkZero(today.getHours() + "");
+    const minutes = checkZero(today.getMinutes() + "");
+    const seconds = checkZero(today.getSeconds() + "");
+    const date = `${day}/${month}/${year} ${hour}:${minutes}:${seconds}`;
+
+    function checkZero(data) {
+      return data.length === 1 ? "0" + data : data;
+    }
+
+    const { email } = req.body;
+    const referrerQuery = `SELECT referrer FROM users WHERE email=?`;
+    const referrer = await queryDatabase(referrerQuery, [email]);
+
+    if (referrer.length) {
+      const updateReferralQuery = `UPDATE users SET balance=balance+1 WHERE id=?`;
+      const getUserQuery = `SELECT id FROM users WHERE id=?`;
+      const userResult = await queryDatabase(getUserQuery, [
+        referrer[0].referrer,
+      ]);
+      const insertNotificationQuery = `INSERT INTO notifications (notification, userId) VALUES (?, ?)`;
+
+      await queryDatabase(insertNotificationQuery, [
+        "Your referral code has registered a user and you have been credited 1 dollar",
+        userResult[0].id,
+      ]);
+      await queryDatabase(updateReferralQuery, [referrer[0].referrer]);
+    }
+
+    const transactionQuery = `INSERT INTO transactions (amount, user_email, date, transaction_info) VALUES (?, ?, ?, ?)`;
+    const updateQuery = `UPDATE users SET payment_status=?, subscription=? WHERE email=?`;
+    const afterOneMonthQuery = `UPDATE users SET subscription=? WHERE email=?`;
+
     const result = await queryDatabase(updateQuery, [1, 1, email]);
     if (result.affectedRows === 0) {
-      res.status(400).send("No user found or no changes made");
+      return res.status(400).send("No user found or no changes made");
     } else {
       cron.schedule(
         "0 0 1 * *",
         () => {
-          queryDatabase(afterOneMonthQuerry, [0, email]);
+          queryDatabase(afterOneMonthQuery, [0, email]);
         },
         {
           scheduled: true,
           timezone: "Asia/Tbilisi",
         }
       );
-      await queryDatabase(transactionQuerry, [3, email, date, "registration"]);
-    await  levelup(req, res);
+
+      await queryDatabase(transactionQuery, [3, email, date, "registration"]);
+      await levelup(req, res);
       res.send("Updated successfully");
     }
   } catch (error) {
+    console.error("Failed to update payment status", error);
     res.status(400).send("Failed to update payment status");
   }
 });
+
 
 fromAdminRouter.post("/add-question", async (req, res) => {
   const gameIsStartedQuery = `SELECT started_game FROM admin`;
