@@ -141,7 +141,7 @@ marketRouter.post("/buy-ticket", async (req, res) => {
           : "თქვენ წარმატებით შეიძინეთ გათამაშების ბილეთი"
       );
     } else {
-      const { email } = req.body;
+      const { email ,language} = req.body;
       const userQuery = `SELECT balance FROM users WHERE email=?`;
       const ticketQuery = `SELECT * FROM market WHERE product_name=?`;
 
