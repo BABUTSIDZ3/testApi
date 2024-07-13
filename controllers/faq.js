@@ -5,12 +5,16 @@ const faqRouter = express.Router();
 
 faqRouter.post("/", async (req, res) => {
   const { language } = req.body;
-  let faqQuerry = `SELECT question_en,answer_en FROM faq`;
-  if (language == "GE") {
-    faqQuerry = `SELECT question_ge,answer_ge FROM faq`;
+  let faqQuery = `SELECT question_en AS question, answer_en AS answer FROM faq`;
+  if (language === "GE") {
+    faqQuery = `SELECT question_ge AS question, answer_ge AS answer FROM faq`;
   }
-  const result = await queryDatabase(faqQuerry);
-  res.send(result);
+  try {
+    const result = await queryDatabase(faqQuery);
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ error: "An error occurred while fetching the FAQ" });
+  }
 });
 
 export default faqRouter;

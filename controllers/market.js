@@ -273,7 +273,7 @@ marketRouter.post("/buy-health", async (req, res) => {
         );
       }
     } else {
-      const { email } = req.body;
+      const { email ,language} = req.body;
       const userQuery = `SELECT balance,health_with_money FROM users WHERE email=?`;
       const ticketQuery = `SELECT * FROM market WHERE product_name=?`;
 
@@ -357,7 +357,7 @@ marketRouter.post("/buy-help", async (req, res) => {
         );
       }
     } else {
-      const { email } = req.body;
+      const { email ,language} = req.body;
       const userQuery = `SELECT balance,help_with_money FROM users WHERE email=?`;
       const ticketQuery = `SELECT * FROM market WHERE product_name=?`;
 
