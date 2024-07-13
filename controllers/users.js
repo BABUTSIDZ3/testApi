@@ -39,8 +39,8 @@ usersRouter.delete("/delete", async (req, res) => {
   res.send("succesfull");
 });
 
-usersRouter.get("/:token", async (req, res) => {
-  const { token } = req.params;
+usersRouter.post("/:token", async (req, res) => {
+  const { token ,language} = req.body;
   try {
     const sql_query = `SELECT * FROM users WHERE token = ?`;
     const notificationsQuerry=`SELECT notification FROM notifications WHERE userId = ?`;
