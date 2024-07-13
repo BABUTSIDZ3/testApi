@@ -169,7 +169,7 @@ questionsRouter.post("/answer", async (req, res) => {
       : question[0].right_answer_EN === answer
   ) {
     res.send("Your answer is correct");
-    await queryDatabase(pointAddQuerry, [pointAddQuerry, user_id]);
+    await queryDatabase(pointAddQuerry, [pointToAdd, user_id]);
   } else {
     await queryDatabase(incorrectAnswerQuerry, [user_id]);
     res.send("Your answer is not correct");
