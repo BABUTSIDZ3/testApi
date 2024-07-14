@@ -236,7 +236,10 @@ authRouter.post("/login", async (req, res) => {
       const user = result[0];
       if (!user.verifyed) {
         return res.json({
-          status: "you are not verified",
+          status:
+            language == "EN"
+              ? "you are not verified"
+              : "თქვენ გავლილი არ გაქვთ ვერიფიკაცია",
           token: user.token,
           email: user.email,
         });

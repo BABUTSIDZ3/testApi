@@ -43,13 +43,15 @@ usersRouter.post("/:token", async (req, res) => {
   const { token ,language} = req.body;
   try {
     const sql_query = `SELECT * FROM users WHERE token = ?`;
-    const notificationsQuerry=`SELECT notification FROM notifications WHERE userId = ?`;
+    const notificationsQuerry = `SELECT notification_${
+      language == "EN" ? "en" : "ge"
+    } FROM notifications WHERE userId = ?`;
 
     const data = await queryDatabase(sql_query, [token]);
      if (data[0]) {
       const notifications = await queryDatabase(notificationsQuerry, [data[0].id]);
        const {email} = data[0]
-       const transactionsQuerry = `SELECT date,status,amount,transaction_info FROM transactions WHERE user_email=?`;
+       const transactionsQuerry = `SELECT date,status,amount,transaction_info_${language=="EN"?"en":"ge"} FROM transactions WHERE user_email=?`;
        const transactions = await queryDatabase(transactionsQuerry, [email]);
          const response = {
            userData: data,

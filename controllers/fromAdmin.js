@@ -81,7 +81,7 @@ fromAdminRouter.post("/subscription", async (req, res) => {
     return data;
   }
   const { email } = req.body;
-  const transactionQuerry = `INSERT INTO transactions (amount, user_email,date,transaction_info) VALUES (?, ?, ?,?)`;
+  const transactionQuerry = `INSERT INTO transactions (amount, user_email,date,transaction_info_en,transaction_info_ge) VALUES (?, ?, ?,?,?)`;
   const updateQuery = `UPDATE users SET subscription=? WHERE email=?`;
   const afterOneMonthQuerry = `UPDATE users SET subscription=? WHERE email=?`;
   try {
@@ -99,7 +99,7 @@ fromAdminRouter.post("/subscription", async (req, res) => {
           timezone: "Asia/Tbilisi",
         }
       );
-      await queryDatabase(transactionQuerry, [3, email, date, "subscription"]);
+      await queryDatabase(transactionQuerry, [3, email, date, "subscription",'საბსქრიფშენი']);
       res.send("Updated successfully");
     }
   } catch (error) {
@@ -132,17 +132,17 @@ fromAdminRouter.post("/registration", async (req, res) => {
       const userResult = await queryDatabase(getUserQuery, [
         referrer[0].referrer,
       ]);
-      const insertNotificationQuery = `INSERT INTO notifications (notification, userId) VALUES (?, ?)`;
+      const insertNotificationQuery = `INSERT INTO notifications (notification_en,notification_ge, userId) VALUES (?, ?,?)`;
 
       await queryDatabase(insertNotificationQuery, [
-        "Your referral code has registered a user and you have been credited 1 dollar",
+        "Your referral code has registered a user and you have been credited 1 dollar","თქვენი რეფერალური კოდით დარეგისტრირდა მომხმარებელი და თქვენ დაგერიცხათ 1 დოლარი ბალანსზე",
         userResult[0].id,
       ]);
       await queryDatabase(updateReferralQuery, [referrer[0].referrer]);
     
     }
 
-    const transactionQuery = `INSERT INTO transactions (amount, user_email, date,transaction_info) VALUES (?, ?, ?, ?)`;
+    const transactionQuery = `INSERT INTO transactions (amount, user_email, date,transaction_info_en,transaction_info_ge) VALUES (?, ?, ?, ?,?)`;
     const updateQuery = `UPDATE users SET payment_status=?, subscription=? WHERE email=?`;
     const afterOneMonthQuery = `UPDATE users SET subscription=? WHERE email=?`;
 
@@ -161,7 +161,7 @@ fromAdminRouter.post("/registration", async (req, res) => {
         }
       );
 
-      await queryDatabase(transactionQuery, [3, email, date, "registration"]);
+      await queryDatabase(transactionQuery, [3, email, date, "registration",'რეგისტრაცია']);
       await levelup(req, res);
       res.send("Updated successfully");
     }
@@ -354,7 +354,7 @@ fromAdminRouter.post("/withdraw", async (req, res) => {
 
   // Query user's balance
   const getUserBalanceQuery = `SELECT balance FROM users WHERE email = ?`;
-  const transactionQuerry = `INSERT INTO transactions (amount, user_email,date,transaction_info) VALUES (?, ?, ?,?)`;
+  const transactionQuerry = `INSERT INTO transactions (amount, user_email,date,transaction_info_en,transaction_info_ge) VALUES (?, ?, ?,?,?)`;
   const balanceResult = await queryDatabase(getUserBalanceQuery, [email]);
 
   if (balanceResult.length === 0) {
@@ -374,7 +374,7 @@ fromAdminRouter.post("/withdraw", async (req, res) => {
   // Perform withdrawal
   const updateUserBalanceQuery = `UPDATE users SET balance = balance - ? WHERE email = ?`;
   await queryDatabase(updateUserBalanceQuery, [amount, email]);
-  await queryDatabase(transactionQuerry, [amount, email, date, "withdraw"]);
+  await queryDatabase(transactionQuerry, [amount, email, date, "withdraw",'გატანა']);
 
   res.send("success");
 });
@@ -405,10 +405,10 @@ fromAdminRouter.post("/deposit", async (req, res) => {
     }
     return data;
   }
-  const transactionQuerry = `INSERT INTO transactions (amount, user_email,date,transaction_info) VALUES (?, ?, ?,?)`;
+  const transactionQuerry = `INSERT INTO transactions (amount, user_email,date,transaction_info_en,transaction_info_ge) VALUES (?, ?, ?,?,?)`;
   const userQuerry = `UPDATE users SET balance=balance+? WHERE email=?`;
   await queryDatabase(userQuerry, [amount, email]);
-  await queryDatabase(transactionQuerry, [amount, email, date, "deposit"]);
+  await queryDatabase(transactionQuerry, [amount, email, date, "deposit","შემოტანა"]);
   res.send("success");
 });
 
