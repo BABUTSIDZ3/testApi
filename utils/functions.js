@@ -22,7 +22,7 @@ export async function levelup(req, res) {
       try {
         rounds = 0;
         const sql_query =
-          "SELECT id, balancetobecollected, paydonlevel, level, balance, payment_status, subscription FROM users";
+          "SELECT * FROM users";
         const results = await queryDatabase(sql_query);
         const filteredResult = results.filter(
           (response) => response.payment_status !== 0
