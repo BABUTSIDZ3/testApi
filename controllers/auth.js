@@ -247,7 +247,10 @@ authRouter.post("/login", async (req, res) => {
 
       if (user.payment_status !== 1) {
         return res.json({
-          status: "payment status is not valid",
+          status:
+            language == "EN"
+              ? "You have not paid the registration fee, write to us on Facebook page"
+              : "თქვენ არ გაქვთ გადახდილი რეგისტრაციის საფასური მოგვწერეთ ფეისბუკ ფეიჯზე",
           token: user.token,
         });
       }
