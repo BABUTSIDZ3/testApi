@@ -168,11 +168,11 @@ questionsRouter.post("/answer", async (req, res) => {
       ? question[0].right_answer_GE
       : question[0].right_answer_EN === answer
   ) {
-    res.send("Your answer is correct");
+    res.send(language=="EN"?"Your answer is correct":"პასუხი სწორია");
     await queryDatabase(pointAddQuerry, [pointToAdd, user_id]);
   } else {
     await queryDatabase(incorrectAnswerQuerry, [user_id]);
-    res.send("Your answer is not correct");
+    res.send(language == "EN" ? "Your answer is not correct" : "პასუხი არასწორია");
   }
 });
 
