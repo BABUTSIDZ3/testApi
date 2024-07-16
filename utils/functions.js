@@ -12,8 +12,6 @@ export async function queryDatabase(sql, values) {
     throw err; // Re-throw the error for handling in the caller
   }
 }
-
-
 export async function levelup(req, res) {
   try {
     let rounds = 0;
@@ -21,8 +19,7 @@ export async function levelup(req, res) {
     const runLevelUp = async () => {
       try {
         rounds = 0;
-        const sql_query =
-          "SELECT * FROM users";
+        const sql_query = "SELECT * FROM users";
         const results = await queryDatabase(sql_query);
         const filteredResult = results.filter(
           (response) => response.payment_status !== 0
@@ -39,8 +36,6 @@ export async function levelup(req, res) {
             groupedResult[item.level].paydonlevel1.push(item);
           }
         });
-
-        console.log("Grouped Result:", groupedResult); // Debug statement
 
         for (const level of Object.keys(groupedResult)) {
           const response = groupedResult[level];
@@ -67,18 +62,18 @@ export async function levelup(req, res) {
               (a, b) => a.id - b.id
             );
 
-            const updatepaydonlevelQuery = `UPDATE users SET balancetobecollected = 0, paydonlevel = 1 WHERE id IN (${response.paydonlevel0
+            // Update users whose balance was collected
+            const updateCollectedBalanceQuery = `UPDATE users SET balancetobecollected = 0, paydonlevel = 1 WHERE id IN (${response.paydonlevel0
               .slice(0, 2)
               .map((user) => user.id)
               .join(",")})`;
-            console.log("Executing SQL query:", updatepaydonlevelQuery); // Debug statement
-            await queryDatabase(updatepaydonlevelQuery);
+            await queryDatabase(updateCollectedBalanceQuery);
 
-            const remainingBalance = forbalancetobecollected; // Define remainingBalance correctly
+            // Update the user who moves to the next level
+            const movingUserId = sortedUsers[0].id;
+            const newLevel = response.paydonlevel0[0].level + 1;
 
-            const updateUserQuery = `UPDATE users SET balance = balance + ${forbalance}, balancetobecollected = balancetobecollected + ${remainingBalance}, paydonlevel = 0, level = ${
-              response.paydonlevel0[0].level + 1
-            } WHERE id = ${sortedUsers[0].id}`;
+            const updateUserQuery = `UPDATE users SET balance = balance + ${forbalance}, balancetobecollected = balancetobecollected + ${forbalancetobecollected}, paydonlevel = 0, level = ${newLevel} WHERE id = ${movingUserId}`;
             console.log("Executing SQL query:", updateUserQuery); // Debug statement
             await queryDatabase(updateUserQuery);
           }
@@ -99,3 +94,4 @@ export async function levelup(req, res) {
     res.send(error.message);
   }
 }
+
