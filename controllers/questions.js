@@ -28,7 +28,13 @@ questionsRouter.post("/active", async (req, res) => {
       }
 
       if (userHealthResult?.health < 1) {
-        res.status(403).send(language=="EN"?"Your health is too low to perform any actions.":"თქვენ არ გაქვთ სიცოცხლე და ვერ შეძლებთ თამაშის გაგრძელებას");
+        res
+          .status(403)
+          .send(
+            language == "EN"
+              ? "Your health is too low to perform any actions, do you want to buy?"
+              : "თქვენ არ გაქვთ სიცოცხლე და ვერ შეძლებთ თამაშის გაგრძელებას, გნებავთ შეიძინოთ?"
+          );
         return;
       }
 
@@ -36,7 +42,7 @@ questionsRouter.post("/active", async (req, res) => {
       const [userHelpResult] = await queryDatabase(getUserHelpQuery, [user_id]);
 
       if (usingHelp == 1 && userHelpResult.help < 1) {
-        res.status(403).send(language=="EN"?"You don't have enough help cards to use help.":"თქვენ არ გაქვთ დახმარების ქარდი");
+        res.status(403).send(language=="EN"?"You don't have enough help cards to use help, do you want to buy?":"თქვენ არ გაქვთ დახმარების ქარდი, გნებავთ შეიძინოთ?");
         return;
       }
 
