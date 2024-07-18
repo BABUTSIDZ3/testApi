@@ -35,13 +35,13 @@ marketRouter.post("/", async (req, res) => {
   let selectFields;
   // Determine which fields to select based on the game status
   if (gameStatus === 1) {
-    selectFields = `product_name, product_image, product_price_in_usd,id, ${
+    selectFields = `product_name_ge AS product_name , product_image, product_price_in_usd,id, ${
       language == "GE"
         ? "description_ge AS description"
         : "description_en AS description"
     }`;
   } else {
-    selectFields = `product_name, product_image, product_price_in_point,id, ${
+    selectFields = `product_name AS product_name, product_image, product_price_in_point,id, ${
       language == "GE"
         ? "description_ge AS description"
         : "description_en AS description"
@@ -117,7 +117,7 @@ marketRouter.post("/buy-ticket", async (req, res) => {
     if (gameStatus.started_game == 0) {
       const { email, language } = req.body;
       const userQuery = `SELECT point, balance FROM users WHERE email=?`;
-      const ticketQuery = `SELECT * FROM market WHERE product_name=?`;
+      const ticketQuery = `SELECT * FROM market WHERE product_name_${language.toLowerCase()}=?`;
 
       const [ticketInfo] = await queryDatabase(ticketQuery, ["ticket"]);
       const [userInfo] = await queryDatabase(userQuery, [email]);
@@ -147,7 +147,7 @@ marketRouter.post("/buy-ticket", async (req, res) => {
     } else {
       const { email ,language} = req.body;
       const userQuery = `SELECT balance FROM users WHERE email=?`;
-      const ticketQuery = `SELECT * FROM market WHERE product_name=?`;
+      const ticketQuery = `SELECT * FROM market WHERE product_name_${language.toLowerCase()}=?`;
 
       const [ticketInfo] = await queryDatabase(ticketQuery, ["ticket"]);
       const [userInfo] = await queryDatabase(userQuery, [email]);
@@ -204,7 +204,7 @@ marketRouter.post("/exchange-to-money", async (req, res) => {
 
   // Continue with the exchange logic
   const getUserInfoQuery = `SELECT point FROM users WHERE email=?`;
-  const getMoneyInfoQuery = `SELECT product_price_in_point FROM market WHERE product_name=?`;
+  const getMoneyInfoQuery = `SELECT product_price_in_point FROM market WHERE product_name_${language.toLowerCase()}=?`;
   const productInfo = await queryDatabase(getMoneyInfoQuery, [
     "exchange_to_money",
   ]);
@@ -243,7 +243,7 @@ marketRouter.post("/buy-health", async (req, res) => {
     if (gameStatus.started_game == 0) {
       const { email ,language} = req.body;
       const userQuery = `SELECT point, balance,health_with_point FROM users WHERE email=?`;
-      const ticketQuery = `SELECT * FROM market WHERE product_name=?`;
+      const ticketQuery = `SELECT * FROM market WHERE product_name_${language.toLowerCase()}=?`;
       const [ticketInfo] = await queryDatabase(ticketQuery, ["health"]);
       const [userInfo] = await queryDatabase(userQuery, [email]);
       if (!userInfo || userInfo.point < ticketInfo.product_price_in_point) {
@@ -279,7 +279,7 @@ marketRouter.post("/buy-health", async (req, res) => {
     } else {
       const { email ,language} = req.body;
       const userQuery = `SELECT balance,health_with_money FROM users WHERE email=?`;
-      const ticketQuery = `SELECT * FROM market WHERE product_name=?`;
+      const ticketQuery = `SELECT * FROM market WHERE product_name_${language.toLowerCase()}=?`;
 
       const [ticketInfo] = await queryDatabase(ticketQuery, ["health"]);
       const [userInfo] = await queryDatabase(userQuery, [email]);
@@ -323,7 +323,7 @@ marketRouter.post("/buy-help", async (req, res) => {
     if (gameStatus.started_game == 0) {
       const { email ,language} = req.body;
       const userQuery = `SELECT point, balance,help_with_point FROM users WHERE email=?`;
-      const ticketQuery = `SELECT * FROM market WHERE product_name=?`;
+      const ticketQuery = `SELECT * FROM market WHERE product_name_${language.toLowerCase()}=?`;
 
       const [ticketInfo] = await queryDatabase(ticketQuery, ["help"]);
       const [userInfo] = await queryDatabase(userQuery, [email]);
@@ -363,7 +363,7 @@ marketRouter.post("/buy-help", async (req, res) => {
     } else {
       const { email ,language} = req.body;
       const userQuery = `SELECT balance,help_with_money FROM users WHERE email=?`;
-      const ticketQuery = `SELECT * FROM market WHERE product_name=?`;
+      const ticketQuery = `SELECT * FROM market WHERE product_name_${language.toLowerCase()}=?`;
 
       const [ticketInfo] = await queryDatabase(ticketQuery, ["help"]);
       const [userInfo] = await queryDatabase(userQuery, [email]);
@@ -414,7 +414,7 @@ marketRouter.post("/buy-x-card", async (req, res) => {
     if (gameStatus.started_game == 0) {
       const { email, which_x ,language} = req.body; // Define which_x here
       const userQuery = `SELECT point, x_card_with_point FROM users WHERE email=?`;
-      const ticketQuery = `SELECT * FROM market WHERE product_name=?`;
+      const ticketQuery = `SELECT * FROM market WHERE product_name_${language.toLowerCase()}=?`;
 
       const [ticketInfo] = await queryDatabase(ticketQuery, [which_x]);
       const [userInfo] = await queryDatabase(userQuery, [email]);
@@ -452,7 +452,7 @@ marketRouter.post("/buy-x-card", async (req, res) => {
     } else {
       const { email, which_x ,language} = req.body; // Define which_x here as well
       const userQuery = `SELECT balance,x_card_with_money FROM users WHERE email=?`;
-      const ticketQuery = `SELECT * FROM market WHERE product_name=?`;
+      const ticketQuery = `SELECT * FROM market WHERE product_name_${language.toLowerCase()}=?`;
 
       const [ticketInfo] = await queryDatabase(ticketQuery, [which_x]);
       const [userInfo] = await queryDatabase(userQuery, [email]);
