@@ -4,7 +4,7 @@ import { queryDatabase } from "../utils/functions.js";
 const marketRouter = express.Router();
 
 // Function to generate the WHERE clause based on game status and excluded products
-function generateWhereClause(gameStatus) {
+function generateWhereClause(gameStatus,language) {
   // If gameStatus is not 1, return an empty string for the WHERE clause
   if (gameStatus !== 1) {
     return "";
@@ -20,7 +20,7 @@ function generateWhereClause(gameStatus) {
   const excludedProductsString = excludedProducts
     .map((product) => `'${product}'`)
     .join(",");
-  return ` WHERE product_name NOT IN (${excludedProductsString})`;
+  return ` WHERE product_name_${language.toLowerCase()} NOT IN (${excludedProductsString})`;
 }
 
 marketRouter.post("/", async (req, res) => {
@@ -51,7 +51,7 @@ marketRouter.post("/", async (req, res) => {
   // Construct the base query to select items from the market table
   let getItemsQuery = `SELECT ${selectFields} FROM market`;
   // Generate the WHERE clause based on the game status and excluded products
-  const whereClause = generateWhereClause(gameStatus);
+  const whereClause = generateWhereClause(gameStatus,language);
   // Append the WHERE clause to the base query
   getItemsQuery += whereClause;
 
