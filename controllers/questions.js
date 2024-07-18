@@ -18,7 +18,7 @@ questionsRouter.post("/active", async (req, res) => {
       ]);
       if (userHealthResult?.subscription < 1) {
         res
-          .status(403)
+          .status(402)
           .send(
             language == "EN"
               ? "Your subscription has been suspended and you will not be able to continue playing"
