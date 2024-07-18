@@ -12,13 +12,23 @@ questionsRouter.post("/active", async (req, res) => {
       const { user_id, usingHelp, language } = req.body;
 
       // Retrieve the user's health from the database
-      const getUserHealthQuery = `SELECT health FROM users WHERE id = ?`;
+      const getUserHealthQuery = `SELECT health,subscription FROM users WHERE id = ?`;
       const [userHealthResult] = await queryDatabase(getUserHealthQuery, [
         user_id,
       ]);
+      if (userHealthResult?.subscription < 1) {
+        res
+          .status(403)
+          .send(
+            language == "EN"
+              ? "Your subscription has been suspended and you will not be able to continue playing"
+              : "თქვენ შეჩერებულია გაქვთ გამოწერა და ვერ შეძლებთ თამაშის გაგრძელებას"
+          );
+        return;
+      }
 
       if (userHealthResult?.health < 1) {
-        res.status(403).send("Your health is too low to perform any actions.");
+        res.status(403).send(language=="EN"?"Your health is too low to perform any actions.":"თქვენ არ გაქვთ სიცოცხლე და ვერ შეძლებთ თამაშის გაგრძელებას");
         return;
       }
 
@@ -26,7 +36,7 @@ questionsRouter.post("/active", async (req, res) => {
       const [userHelpResult] = await queryDatabase(getUserHelpQuery, [user_id]);
 
       if (usingHelp == 1 && userHelpResult.help < 1) {
-        res.status(403).send("You don't have enough help points to use help.");
+        res.status(403).send(language=="EN"?"You don't have enough help cards to use help.":"თქვენ არ გაქვთ დახმარების ქარდი");
         return;
       }
 
@@ -47,7 +57,7 @@ questionsRouter.post("/active", async (req, res) => {
       );
 
       if (filteredQuestions.length === 0) {
-        res.send("You have seen all the questions.");
+        res.send(language=="EN"?"You have seen all the questions.":"თქვენ უკვე ნახეთ ყველა კითხვა");
         return;
       }
 
@@ -129,7 +139,7 @@ questionsRouter.post("/active", async (req, res) => {
       res.status(500).send("Internal Server Error");
     }
   } else {
-    res.send("The game is paused and will resume soon");
+    res.send(language=="EN"?"The game is paused and will resume soon":"თამაში გაჩერებულია და მალე დაიწყება");
   }
 });
 
@@ -168,11 +178,13 @@ questionsRouter.post("/answer", async (req, res) => {
       ? question[0].right_answer_GE
       : question[0].right_answer_EN === answer
   ) {
-    res.send(language=="EN"?"Your answer is correct":"პასუხი სწორია");
+    res.send(language == "EN" ? "Your answer is correct" : "პასუხი სწორია");
     await queryDatabase(pointAddQuerry, [pointToAdd, user_id]);
   } else {
     await queryDatabase(incorrectAnswerQuerry, [user_id]);
-    res.send(language == "EN" ? "Your answer is not correct" : "პასუხი არასწორია");
+    res.send(
+      language == "EN" ? "Your answer is not correct" : "პასუხი არასწორია"
+    );
   }
 });
 
