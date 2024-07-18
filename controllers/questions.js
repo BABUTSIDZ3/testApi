@@ -159,10 +159,10 @@ function shuffleArray(array) {
 
 questionsRouter.post("/answer", async (req, res) => {
   const { question_id, answer, time, user_id, use_x, language } = req.body;
-  const questionQuerry = `SELECT right_answer_${language} FROM questions WHERE id = ?`;
-  const pointAddQuerry = `UPDATE users SET point = point + ? WHERE id = ?`;
-  const incorrectAnswerQuerry = `UPDATE users SET health = health-1 WHERE id = ?`;
-  const question = await queryDatabase(questionQuerry, [question_id]);
+  const questionQuery = `SELECT right_answer_${language} FROM questions WHERE id = ?`;
+  const pointAddQuery = `UPDATE users SET point = point + ? WHERE id = ?`;
+  const incorrectAnswerQuery = `UPDATE users SET health = health-1 WHERE id = ?`;
+  const question = await queryDatabase(questionQuery, [question_id]);
   let pointToAdd;
   if (use_x == 0) {
     pointToAdd = time;
@@ -176,23 +176,23 @@ questionsRouter.post("/answer", async (req, res) => {
     } else if (use_x == "x2_point") {
       pointColumn = "x2_point";
     }
-    const subtractPointQuerry = `UPDATE users SET ${pointColumn} = ${pointColumn} - 1 WHERE id = ?`;
-    await queryDatabase(subtractPointQuerry, [user_id]);
+    const subtractPointQuery = `UPDATE users SET ${pointColumn} = ${pointColumn} - 1 WHERE id = ?`;
+    await queryDatabase(subtractPointQuery, [user_id]);
   }
-  if (
-    language == "GE"
-      ? question[0].right_answer_GE
-      : question[0].right_answer_EN === answer
-  ) {
+
+  const correctAnswer = question[0][`right_answer_${language}`];
+
+  if (correctAnswer === answer) {
     res.send(language == "EN" ? "Your answer is correct" : "პასუხი სწორია");
-    await queryDatabase(pointAddQuerry, [pointToAdd, user_id]);
+    await queryDatabase(pointAddQuery, [pointToAdd, user_id]);
   } else {
-    await queryDatabase(incorrectAnswerQuerry, [user_id]);
+    await queryDatabase(incorrectAnswerQuery, [user_id]);
     res.send(
       language == "EN" ? "Your answer is not correct" : "პასუხი არასწორია"
     );
   }
 });
+
 
 questionsRouter.get("/history", async (req, res) => {
   const gameIsStartedQuery = `SELECT started_game FROM admin`;
