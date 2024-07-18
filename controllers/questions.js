@@ -57,7 +57,7 @@ questionsRouter.post("/active", async (req, res) => {
       );
 
       if (filteredQuestions.length === 0) {
-        res.send(language=="EN"?"You have seen all the questions.":"თქვენ უკვე ნახეთ ყველა კითხვა");
+        res.status(403).send(language=="EN"?"You have seen all the questions.":"თქვენ უკვე ნახეთ ყველა კითხვა");
         return;
       }
 
@@ -139,7 +139,7 @@ questionsRouter.post("/active", async (req, res) => {
       res.status(500).send("Internal Server Error");
     }
   } else {
-    res.send(language=="EN"?"The game is paused and will resume soon":"თამაში გაჩერებულია და მალე დაიწყება");
+    res.status(403).send(language=="EN"?"The game is paused and will resume soon":"თამაში გაჩერებულია და მალე დაიწყება");
   }
 });
 
