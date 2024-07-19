@@ -42,7 +42,7 @@ usersRouter.post("/", async (req, res) => {
   const { token, language } = req.body;
   try {
     const sql_query = `SELECT * FROM users WHERE token = ?`;
-    const notificationsQuerry = `SELECT notification_${
+    const notificationsQuerry = `SELECT date,notification_${
       language == "EN" ? "en" : "ge"
     } AS notification FROM notifications WHERE userId = ? OR userId = ?`;
 
