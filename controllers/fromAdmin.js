@@ -21,11 +21,10 @@ fromAdminRouter.get("/gift-cards", async (req, res) => {
   res.send(result);
 });
 
-
 fromAdminRouter.get("/balance", async (req, res) => {
   try {
     const getBalanceQuery = `SELECT balance, balancetobecollected FROM users WHERE payment_status=?`;
-    const balances = await queryDatabase(getBalanceQuery,[1]);
+    const balances = await queryDatabase(getBalanceQuery, [1]);
 
     let totalBalance = 0;
     let totalBalanceToBeCollected = 0;
@@ -99,7 +98,13 @@ fromAdminRouter.post("/subscription", async (req, res) => {
           timezone: "Asia/Tbilisi",
         }
       );
-      await queryDatabase(transactionQuerry, [3, email, date, "subscription",'საბსქრიფშენი']);
+      await queryDatabase(transactionQuerry, [
+        3,
+        email,
+        date,
+        "subscription",
+        "საბსქრიფშენი",
+      ]);
       res.send("Updated successfully");
     }
   } catch (error) {
@@ -126,7 +131,7 @@ fromAdminRouter.post("/registration", async (req, res) => {
     const referrerQuery = `SELECT referrer FROM users WHERE email=?`;
     const referrer = await queryDatabase(referrerQuery, [email]);
 
-    if (referrer.referrer && referrer.referrer!==undefined) {
+    if (referrer.referrer && referrer.referrer !== undefined) {
       const updateReferralQuery = `UPDATE users SET balance=balance+1 WHERE id=?`;
       const getUserQuery = `SELECT id FROM users WHERE id=?`;
       const userResult = await queryDatabase(getUserQuery, [
@@ -135,11 +140,11 @@ fromAdminRouter.post("/registration", async (req, res) => {
       const insertNotificationQuery = `INSERT INTO notifications (notification_en,notification_ge, userId) VALUES (?, ?,?)`;
 
       await queryDatabase(insertNotificationQuery, [
-        "Your referral code has registered a user and you have been credited 1 dollar","თქვენი რეფერალური კოდით დარეგისტრირდა მომხმარებელი და თქვენ დაგერიცხათ 1 დოლარი ბალანსზე",
+        "Your referral code has registered a user and you have been credited 1 dollar",
+        "თქვენი რეფერალური კოდით დარეგისტრირდა მომხმარებელი და თქვენ დაგერიცხათ 1 დოლარი ბალანსზე",
         userResult[0].id,
       ]);
       await queryDatabase(updateReferralQuery, [referrer[0].referrer]);
-    
     }
 
     const transactionQuery = `INSERT INTO transactions (amount, user_email, date,transaction_info_en,transaction_info_ge) VALUES (?, ?, ?, ?,?)`;
@@ -161,16 +166,20 @@ fromAdminRouter.post("/registration", async (req, res) => {
         }
       );
 
-      await queryDatabase(transactionQuery, [3, email, date, "registration",'რეგისტრაცია']);
+      await queryDatabase(transactionQuery, [
+        3,
+        email,
+        date,
+        "registration",
+        "რეგისტრაცია",
+      ]);
       await levelup(req, res);
       res.send("Updated successfully");
     }
   } catch (error) {
-  
     res.status(400).send("Failed to update payment status");
   }
 });
-
 
 fromAdminRouter.post("/add-question", async (req, res) => {
   const gameIsStartedQuery = `SELECT started_game FROM admin`;
@@ -249,74 +258,85 @@ fromAdminRouter.post("/stop-game", async (req, res) => {
   const [gameStatusRow] = await queryDatabase(gameIsStartedQuery);
   // Extract the game status from the query result
   const gameStatus = gameStatusRow.started_game;
-  if(gameStatus==0){
-    res.send('თამაში უკვე დასტოპებულია')
-  }else{
+  if (gameStatus == 0) {
+    res.send("თამაში უკვე დასტოპებულია");
+  } else {
+    const notificationsQuerry = `UPDATE notifications SET (notification_ge,notification_en,userId) VALUES (?,?,?) `;
     const stopGameQuerry = `UPDATE admin SET started_game =? WHERE id=?`;
-  const deactivateQuestionsQuerry = `UPDATE questions SET active =? WHERE active=?`;
-  const usersQuerry = `UPDATE users SET health=?, health_with_money=?, health_with_point=?, help_with_money=?, help_with_point=?, x1_25_point=?, x1_5_point=?, x2_point=?, x_card_with_point=?, x_card_with_money=?,help=?`;
-  await queryDatabase(usersQuerry, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0]);
-  await queryDatabase(stopGameQuerry, [0, 1]);
-  await queryDatabase(deactivateQuestionsQuerry, [0, 1]);
-  res.send("stopped successfully");
+    const deactivateQuestionsQuerry = `UPDATE questions SET active =? WHERE active=?`;
+    const usersQuerry = `UPDATE users SET health=?, health_with_money=?, health_with_point=?, help_with_money=?, help_with_point=?, x1_25_point=?, x1_5_point=?, x2_point=?, x_card_with_point=?, x_card_with_money=?,help=?`;
+    await queryDatabase(usersQuerry, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    await queryDatabase(stopGameQuerry, [0, 1]);
+    await queryDatabase(deactivateQuestionsQuerry, [0, 1]);
+    await queryDatabase(notificationsQuerry, [
+      "თამაში დასტოპდა, შეგიძლიათ დაგროვილი ფოინთებით შეიძინოთ ქარდები",
+      "game stopped, you can buy cards in shop with points",
+      "all",
+    ]);
+
+    res.send("stopped successfully");
   }
 });
 
 fromAdminRouter.post("/start-game", async (req, res) => {
- const gameIsStartedQuery = `SELECT started_game FROM admin`;
- // Execute the query to get the game status
- const [gameStatusRow] = await queryDatabase(gameIsStartedQuery);
- // Extract the game status from the query result
- const gameStatus = gameStatusRow.started_game;
- if (gameStatus == 1) {
-   res.send("თამაში უკვე დაწყებულია");
- }else{
-   const { amount_to_be_distributed } = req.body;
-  try { 
-    // Other queries remain the same
-    const userQuery = `UPDATE users SET health = health+?, help = help+?, point = ?, seenquestions = ?, exchanging_to_money = ?`;
-    const startGameQuery = `UPDATE admin SET started_game = ? WHERE id = ?`;
-    const deleteQuestionsQuery = `DELETE FROM questions WHERE active = ?`;
-    const deleteAnswersQuery = `DELETE FROM answers WHERE question_id IN (SELECT id FROM questions WHERE active = ?)`;
+  const gameIsStartedQuery = `SELECT started_game FROM admin`;
+  // Execute the query to get the game status
+  const [gameStatusRow] = await queryDatabase(gameIsStartedQuery);
+  // Extract the game status from the query result
+  const gameStatus = gameStatusRow.started_game;
+  if (gameStatus == 1) {
+    res.send("თამაში უკვე დაწყებულია");
+  } else {
+    const { amount_to_be_distributed } = req.body;
+    try {
+      // Other queries remain the same
+      const userQuery = `UPDATE users SET health = health+?, help = help+?, point = ?, seenquestions = ?, exchanging_to_money = ?`;
+      const startGameQuery = `UPDATE admin SET started_game = ? WHERE id = ?`;
+      const deleteQuestionsQuery = `DELETE FROM questions WHERE active = ?`;
+      const deleteAnswersQuery = `DELETE FROM answers WHERE question_id IN (SELECT id FROM questions WHERE active = ?)`;
+      const notificationsQuerry = `UPDATE notifications SET (notification_ge,notification_en,userId) VALUES (?,?,?) `;
+      const usersWhichExchangingMoneyQuery = `SELECT balance,id FROM users WHERE exchanging_to_money = ?`;
+      const usersWhichExchangingMoney = await queryDatabase(
+        usersWhichExchangingMoneyQuery,
+        [1]
+      );
+      if (amount_to_be_distributed == 0) {
+        await queryDatabase(userQuery, [3, 3, 0, '"', 0]);
+        await queryDatabase(deleteAnswersQuery, [0]);
+        await queryDatabase(deleteQuestionsQuery, [0]);
+        await queryDatabase(startGameQuery, [1, 1]);
 
-    const usersWhichExchangingMoneyQuery = `SELECT balance,id FROM users WHERE exchanging_to_money = ?`;
-    const usersWhichExchangingMoney = await queryDatabase(
-      usersWhichExchangingMoneyQuery,
-      [1]
-    );
-    if (amount_to_be_distributed == 0) {
+        return res.send("Game started successfully");
+      }
+
+      const totalUsers = usersWhichExchangingMoney.length;
+      if (totalUsers === 0) {
+        return res.send("არცერთი მომხმარებელი არ ცვლის თანხას");
+      }
+
+      const amountPerUser = amount_to_be_distributed / totalUsers;
+
+      // Update balance for each user exchanging money
+      for (const user of usersWhichExchangingMoney) {
+        const updatedCoin = user.balance + amountPerUser;
+        await updateUserBalance(user.id, updatedCoin);
+      }
+
       await queryDatabase(userQuery, [3, 3, 0, '"', 0]);
       await queryDatabase(deleteAnswersQuery, [0]);
       await queryDatabase(deleteQuestionsQuery, [0]);
       await queryDatabase(startGameQuery, [1, 1]);
-
-      return res.send("Game started successfully");
+      await queryDatabase(notificationsQuerry, [
+        "თამაში დაიწყო",
+        "game started",
+        "all",
+      ]);
+      res.send("Game started successfully");
+    } catch (error) {
+      console.error(error.message);
+      res.status(500).send("Internal Server Error");
     }
-
-    const totalUsers = usersWhichExchangingMoney.length;
-    if (totalUsers === 0) {
-      return res.send("არცერთი მომხმარებელი არ ცვლის თანხას");
-    }
-
-    const amountPerUser = amount_to_be_distributed / totalUsers;
-
-    // Update balance for each user exchanging money
-    for (const user of usersWhichExchangingMoney) {
-      const updatedCoin = user.balance + amountPerUser;
-      await updateUserBalance(user.id, updatedCoin);
-    }
-
-    await queryDatabase(userQuery, [3, 3, 0, '"', 0]);
-    await queryDatabase(deleteAnswersQuery, [0]);
-    await queryDatabase(deleteQuestionsQuery, [0]);
-    await queryDatabase(startGameQuery, [1, 1]);
-
-    res.send("Game started successfully");
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).send("Internal Server Error");
   }
- }
 });
 
 // Function to update user balance
@@ -368,13 +388,21 @@ fromAdminRouter.post("/withdraw", async (req, res) => {
 
   // Check if user has enough balance to withdraw
   if (userBalanceNumber < amount) {
-    return res.status(400).send("მომხმარებელს არ აქვს საკმარისი თანხა ბალანსზე");
+    return res
+      .status(400)
+      .send("მომხმარებელს არ აქვს საკმარისი თანხა ბალანსზე");
   }
 
   // Perform withdrawal
   const updateUserBalanceQuery = `UPDATE users SET balance = balance - ? WHERE email = ?`;
   await queryDatabase(updateUserBalanceQuery, [amount, email]);
-  await queryDatabase(transactionQuerry, [amount, email, date, "withdraw",'გატანა']);
+  await queryDatabase(transactionQuerry, [
+    amount,
+    email,
+    date,
+    "withdraw",
+    "გატანა",
+  ]);
 
   res.send("success");
 });
@@ -408,7 +436,13 @@ fromAdminRouter.post("/deposit", async (req, res) => {
   const transactionQuerry = `INSERT INTO transactions (amount, user_email,date,transaction_info_en,transaction_info_ge) VALUES (?, ?, ?,?,?)`;
   const userQuerry = `UPDATE users SET balance=balance+? WHERE email=?`;
   await queryDatabase(userQuerry, [amount, email]);
-  await queryDatabase(transactionQuerry, [amount, email, date, "deposit","შემოტანა"]);
+  await queryDatabase(transactionQuerry, [
+    amount,
+    email,
+    date,
+    "deposit",
+    "შემოტანა",
+  ]);
   res.send("success");
 });
 
