@@ -137,9 +137,9 @@ fromAdminRouter.post("/registration", async (req, res) => {
       const userResult = await queryDatabase(getUserQuery, [
         referrer[0].referrer,
       ]);
-      const insertNotificationQuery = `INSERT INTO notifications (notification_en,notification_ge, userId) VALUES (?, ?,?)`;
+      const insertNotificationQuery = `INSERT INTO notifications (date,notification_en,notification_ge, userId) VALUES (?,?, ?,?)`;
 
-      await queryDatabase(insertNotificationQuery, [
+      await queryDatabase(insertNotificationQuery, [date,
         "Your referral code has registered a user and you have been credited 1 dollar",
         "თქვენი რეფერალური კოდით დარეგისტრირდა მომხმარებელი და თქვენ დაგერიცხათ 1 დოლარი ბალანსზე",
         userResult[0].id,
@@ -252,6 +252,19 @@ fromAdminRouter.post("/add-question", async (req, res) => {
   }
 });
 fromAdminRouter.post("/stop-game", async (req, res) => {
+ const today = new Date();
+ const day = checkZero(today.getDate() + "");
+ const month = checkZero(today.getMonth() + 1 + "");
+ const year = today.getFullYear() + "";
+ const hour = checkZero(today.getHours() + "");
+ const minutes = checkZero(today.getMinutes() + "");
+ const seconds = checkZero(today.getSeconds() + "");
+ const date = `${day}/${month}/${year} ${hour}:${minutes}:${seconds}`;
+
+ function checkZero(data) {
+   return data.length === 1 ? "0" + data : data;
+ }
+
   const gameIsStartedQuery = `SELECT started_game FROM admin`;
   // Execute the query to get the game status
   const [gameStatusRow] = await queryDatabase(gameIsStartedQuery);
@@ -261,7 +274,7 @@ fromAdminRouter.post("/stop-game", async (req, res) => {
   if (gameStatus == 0) {
     res.send("თამაში უკვე დასტოპებულია");
   } else {
-    const notificationsQuery = `INSERT INTO notifications (notification_ge, notification_en, userId) VALUES (?, ?, ?)`;
+    const notificationsQuery = `INSERT INTO notifications (date,notification_ge, notification_en, userId) VALUES (?, ?, ?,?)`;
     const stopGameQuery = `UPDATE admin SET started_game = ? WHERE id = ?`;
     const deactivateQuestionsQuery = `UPDATE questions SET active = ? WHERE active = ?`;
     const usersQuery = `UPDATE users SET health = ?, health_with_money = ?, health_with_point = ?, help_with_money = ?, help_with_point = ?, x1_25_point = ?, x1_5_point = ?, x2_point = ?, x_card_with_point = ?, x_card_with_money = ?, help = ?`;
@@ -269,7 +282,7 @@ fromAdminRouter.post("/stop-game", async (req, res) => {
     await queryDatabase(usersQuery, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
     await queryDatabase(stopGameQuery, [0, 1]);
     await queryDatabase(deactivateQuestionsQuery, [0, 1]);
-    await queryDatabase(notificationsQuery, [
+    await queryDatabase(notificationsQuery, [date,
       "თამაში დასტოპდა, შეგიძლიათ დაგროვილი ფოინთებით შეიძინოთ ქარდები",
       "game stopped, you can buy cards in shop with points",
       "all",
@@ -281,6 +294,18 @@ fromAdminRouter.post("/stop-game", async (req, res) => {
 
 
 fromAdminRouter.post("/start-game", async (req, res) => {
+   const today = new Date();
+   const day = checkZero(today.getDate() + "");
+   const month = checkZero(today.getMonth() + 1 + "");
+   const year = today.getFullYear() + "";
+   const hour = checkZero(today.getHours() + "");
+   const minutes = checkZero(today.getMinutes() + "");
+   const seconds = checkZero(today.getSeconds() + "");
+   const date = `${day}/${month}/${year} ${hour}:${minutes}:${seconds}`;
+
+   function checkZero(data) {
+     return data.length === 1 ? "0" + data : data;
+   }
   const gameIsStartedQuery = `SELECT started_game FROM admin`;
   // Execute the query to get the game status
   const [gameStatusRow] = await queryDatabase(gameIsStartedQuery);
@@ -296,7 +321,7 @@ fromAdminRouter.post("/start-game", async (req, res) => {
       const startGameQuery = `UPDATE admin SET started_game = ? WHERE id = ?`;
       const deleteQuestionsQuery = `DELETE FROM questions WHERE active = ?`;
       const deleteAnswersQuery = `DELETE FROM answers WHERE question_id IN (SELECT id FROM questions WHERE active = ?)`;
-      const notificationsQuery = `INSERT INTO notifications (notification_ge, notification_en, userId) VALUES (?, ?, ?)`;
+      const notificationsQuery = `INSERT INTO notifications (date,notification_ge, notification_en, userId) VALUES (?,?, ?, ?)`;
       const usersWhichExchangingMoneyQuery = `SELECT balance,id FROM users WHERE exchanging_to_money = ?`;
       const usersWhichExchangingMoney = await queryDatabase(
         usersWhichExchangingMoneyQuery,
@@ -307,7 +332,7 @@ fromAdminRouter.post("/start-game", async (req, res) => {
         await queryDatabase(deleteAnswersQuery, [0]);
         await queryDatabase(deleteQuestionsQuery, [0]);
         await queryDatabase(startGameQuery, [1, 1]);
- await queryDatabase(notificationsQuery, [
+ await queryDatabase(notificationsQuery, [date,
    "თამაში დაიწყო",
    "game started",
    "all",
