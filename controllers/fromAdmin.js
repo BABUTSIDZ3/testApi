@@ -251,24 +251,25 @@ fromAdminRouter.post("/add-question", async (req, res) => {
     }
   }
 });
-
 fromAdminRouter.post("/stop-game", async (req, res) => {
   const gameIsStartedQuery = `SELECT started_game FROM admin`;
   // Execute the query to get the game status
   const [gameStatusRow] = await queryDatabase(gameIsStartedQuery);
   // Extract the game status from the query result
   const gameStatus = gameStatusRow.started_game;
+
   if (gameStatus == 0) {
     res.send("თამაში უკვე დასტოპებულია");
   } else {
-    const notificationsQuerry = `UPDATE notifications SET (notification_ge,notification_en,userId) VALUES (?,?,?) `;
-    const stopGameQuerry = `UPDATE admin SET started_game =? WHERE id=?`;
-    const deactivateQuestionsQuerry = `UPDATE questions SET active =? WHERE active=?`;
-    const usersQuerry = `UPDATE users SET health=?, health_with_money=?, health_with_point=?, help_with_money=?, help_with_point=?, x1_25_point=?, x1_5_point=?, x2_point=?, x_card_with_point=?, x_card_with_money=?,help=?`;
-    await queryDatabase(usersQuerry, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-    await queryDatabase(stopGameQuerry, [0, 1]);
-    await queryDatabase(deactivateQuestionsQuerry, [0, 1]);
-    await queryDatabase(notificationsQuerry, [
+    const notificationsQuery = `UPDATE notifications SET notification_ge = ?, notification_en = ?, userId = ? WHERE userId = 'all'`;
+    const stopGameQuery = `UPDATE admin SET started_game = ? WHERE id = ?`;
+    const deactivateQuestionsQuery = `UPDATE questions SET active = ? WHERE active = ?`;
+    const usersQuery = `UPDATE users SET health = ?, health_with_money = ?, health_with_point = ?, help_with_money = ?, help_with_point = ?, x1_25_point = ?, x1_5_point = ?, x2_point = ?, x_card_with_point = ?, x_card_with_money = ?, help = ?`;
+
+    await queryDatabase(usersQuery, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    await queryDatabase(stopGameQuery, [0, 1]);
+    await queryDatabase(deactivateQuestionsQuery, [0, 1]);
+    await queryDatabase(notificationsQuery, [
       "თამაში დასტოპდა, შეგიძლიათ დაგროვილი ფოინთებით შეიძინოთ ქარდები",
       "game stopped, you can buy cards in shop with points",
       "all",
@@ -277,6 +278,7 @@ fromAdminRouter.post("/stop-game", async (req, res) => {
     res.send("stopped successfully");
   }
 });
+
 
 fromAdminRouter.post("/start-game", async (req, res) => {
   const gameIsStartedQuery = `SELECT started_game FROM admin`;
