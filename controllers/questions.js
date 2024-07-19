@@ -6,10 +6,10 @@ const questionsRouter = express.Router();
 questionsRouter.post("/active", async (req, res) => {
   const gameIsStartedQuery = `SELECT started_game FROM admin`;
   const [gameStatus] = await queryDatabase(gameIsStartedQuery);
-
+   const { user_id, usingHelp, language } = req.body;
   if (gameStatus.started_game == 1) {
     try {
-      const { user_id, usingHelp, language } = req.body;
+   
 
       // Retrieve the user's health from the database
       const getUserHealthQuery = `SELECT health,subscription FROM users WHERE id = ?`;
