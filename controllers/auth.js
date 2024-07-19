@@ -28,13 +28,6 @@ authRouter.post("/register", async (req, res) => {
   try {
     let { username, password, email, avatar, referralCode, language } =
       req.body;
-
-    // Set default avatar based on avatar value
-    avatar =
-      avatar == 1
-        ? "https://photos.google.com/u/2/photo/AF1QipOGYCB4npjaJLPuJQqAqEJKsKH7KyrCxyBDeubS"
-        : "https://photos.google.com/u/2/photo/AF1QipO8idVh2ok3RbK-Q01vhOF3q7MN3zmiU7DX-stB";
-
     // Hash password using bcrypt
     const passwordHash = await bcrypt.hash(password, Number(saltrounds));
 
