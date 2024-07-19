@@ -36,11 +36,15 @@ marketRouter.post("/", async (req, res) => {
   // Determine which fields to select based on the game status
   if (gameStatus === 1) {
     selectFields = `product_name, product_image, product_price_in_usd,id, ${
-      language == "GE" ? "description_ge" : "description_en"
+      language == "GE"
+        ? "description_ge AS description"
+        : "description_en AS description"
     }`;
   } else {
     selectFields = `product_name, product_image, product_price_in_point,id, ${
-      language == "GE" ? "description_ge" : "description_en"
+      language == "GE"
+        ? "description_ge AS description"
+        : "description_en AS description"
     }`;
   }
 
