@@ -44,12 +44,12 @@ usersRouter.post("/", async (req, res) => {
     const sql_query = `SELECT * FROM users WHERE token = ?`;
     const notificationsQuerry = `SELECT notification_${
       language == "EN" ? "en" : "ge"
-    } AS notification FROM notifications WHERE userId = ?`;
+    } AS notification FROM notifications WHERE userId = ? OR userId = ?`;
 
     const data = await queryDatabase(sql_query, [token]);
     if (data[0]) {
       const notifications = await queryDatabase(notificationsQuerry, [
-        data[0].id,
+        data[0].id,"all",
       ]);
       const { email } = data[0];
       const transactionsQuerry = `
