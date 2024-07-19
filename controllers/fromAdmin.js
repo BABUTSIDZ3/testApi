@@ -261,7 +261,7 @@ fromAdminRouter.post("/stop-game", async (req, res) => {
   if (gameStatus == 0) {
     res.send("თამაში უკვე დასტოპებულია");
   } else {
-    const notificationsQuery = `UPDATE notifications SET notification_ge = ?, notification_en = ?, userId = ? WHERE userId = 'all'`;
+    const notificationsQuery = `INSERT INTO notifications (notification_ge, notification_en, userId) VALUES (?, ?, ?)`;
     const stopGameQuery = `UPDATE admin SET started_game = ? WHERE id = ?`;
     const deactivateQuestionsQuery = `UPDATE questions SET active = ? WHERE active = ?`;
     const usersQuery = `UPDATE users SET health = ?, health_with_money = ?, health_with_point = ?, help_with_money = ?, help_with_point = ?, x1_25_point = ?, x1_5_point = ?, x2_point = ?, x_card_with_point = ?, x_card_with_money = ?, help = ?`;
@@ -296,7 +296,7 @@ fromAdminRouter.post("/start-game", async (req, res) => {
       const startGameQuery = `UPDATE admin SET started_game = ? WHERE id = ?`;
       const deleteQuestionsQuery = `DELETE FROM questions WHERE active = ?`;
       const deleteAnswersQuery = `DELETE FROM answers WHERE question_id IN (SELECT id FROM questions WHERE active = ?)`;
-      const notificationsQuerry = `UPDATE notifications SET (notification_ge,notification_en,userId) VALUES (?,?,?) `;
+      const notificationsQuery = `INSERT INTO notifications (notification_ge, notification_en, userId) VALUES (?, ?, ?)`;
       const usersWhichExchangingMoneyQuery = `SELECT balance,id FROM users WHERE exchanging_to_money = ?`;
       const usersWhichExchangingMoney = await queryDatabase(
         usersWhichExchangingMoneyQuery,
@@ -307,7 +307,11 @@ fromAdminRouter.post("/start-game", async (req, res) => {
         await queryDatabase(deleteAnswersQuery, [0]);
         await queryDatabase(deleteQuestionsQuery, [0]);
         await queryDatabase(startGameQuery, [1, 1]);
-
+ await queryDatabase(notificationsQuery, [
+   "თამაში დაიწყო",
+   "game started",
+   "all",
+ ]);
         return res.send("Game started successfully");
       }
 
@@ -328,7 +332,7 @@ fromAdminRouter.post("/start-game", async (req, res) => {
       await queryDatabase(deleteAnswersQuery, [0]);
       await queryDatabase(deleteQuestionsQuery, [0]);
       await queryDatabase(startGameQuery, [1, 1]);
-      await queryDatabase(notificationsQuerry, [
+      await queryDatabase(notificationsQuery, [
         "თამაში დაიწყო",
         "game started",
         "all",
