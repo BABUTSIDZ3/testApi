@@ -145,7 +145,7 @@ questionsRouter.post("/active", async (req, res) => {
       res.status(500).send("Internal Server Error");
     }
   } else {
-    res.status(403).send(language=="EN"?"The game is paused and will resume soon":"თამაში გაჩერებულია და მალე დაიწყება");
+    res.status(401).send(language=="EN"?"The game is paused and will resume soon":"თამაში გაჩერებულია და მალე დაიწყება");
   }
 });
 
