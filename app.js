@@ -10,19 +10,34 @@ import fromAdminRouter from "./controllers/fromAdmin.js";
 import marketRouter from "./controllers/market.js";
 import faqRouter from "./controllers/faq.js";
 
-
-export const conection = mariadb.createPool({
+// Database connection
+export const connection = mariadb.createPool({
   host: "bqohr8a7iumyappvkudf-mysql.services.clever-cloud.com",
   user: "urc29xzncnewxm0t",
   password: "AnPehD1d6Jih1Tw7NzMn",
   database: "bqohr8a7iumyappvkudf",
   port: "3306",
   connectionLimit: 10000, // Increased limit for handling higher concurrency
-  connectTimeout: 10000000
+  connectTimeout: 10000000,
 });
 
 const app = express();
-app.use(cors(),express.json())
+
+// CORS configuration
+const allowedOrigin = "https://your-allowed-origin.com"; // Replace with your allowed origin
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || origin === allowedOrigin) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+  })
+);
+
+app.use(express.json());
 
 app.use("/api/users", usersRouter);
 app.use("/api/auth", authRouter);
@@ -32,6 +47,6 @@ app.use("/api/admin", fromAdminRouter);
 app.use("/api/market", marketRouter);
 app.use("/api/faq", faqRouter);
 
-app.listen(3000, () => {
-  console.log(`started on port ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server started on port ${PORT}`);
 });
