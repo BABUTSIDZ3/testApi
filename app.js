@@ -24,20 +24,18 @@ export const conection = mariadb.createPool({
 const app = express();
 
 // CORS configuration
-const allowedOrigins = [
-  "http://localhost:5173/GoldenStrategy/#/GoldenStrategy/Dashboard",
-  "http://localhost:5173/GoldenStrategy/#/GoldenStrategy/Login",
-];
-
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  }
-}));
+const allowedOrigin = "http://localhost:5173"; // Replace with your allowed origin
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || origin === allowedOrigin) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+  })
+);
 
 app.use(express.json());
 
