@@ -11,7 +11,7 @@ import marketRouter from "./controllers/market.js";
 import faqRouter from "./controllers/faq.js";
 
 // Database connection
-export const connection = mariadb.createPool({
+export const conection = mariadb.createPool({
   host: "bqohr8a7iumyappvkudf-mysql.services.clever-cloud.com",
   user: "urc29xzncnewxm0t",
   password: "AnPehD1d6Jih1Tw7NzMn",
