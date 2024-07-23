@@ -99,7 +99,7 @@ res
       : "თქვენ არ გაქვთ საკმარისი თანხა გამოწერის გასაგრძელებლად"
   );
   }else{
-    const updatequerry = `UPDATE users SET subscription=?,balance=balance-3? WHERE email=?`;
+    const updatequerry = `UPDATE users SET subscription=?,balance=balance-3 WHERE email=?`;
     await queryDatabase(updatequerry, [1, email]);
     res.send(
       language == "EN"
