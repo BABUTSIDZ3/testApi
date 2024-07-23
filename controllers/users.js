@@ -100,7 +100,7 @@ res
   );
   }else{
     const updatequerry = `UPDATE users SET subscription=?,balance=? WHERE email=?`;
-    await queryDatabase(updatequerry, [1, user.balance-3, email]);
+    await queryDatabase(updatequerry, [1,Number(user.balance)-3, email]);
     res.send(
       language == "EN"
         ? "You have successfully continued your subscription"
