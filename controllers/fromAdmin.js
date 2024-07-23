@@ -54,64 +54,6 @@ fromAdminRouter.get("/balance", async (req, res) => {
   }
 });
 
-fromAdminRouter.post("/subscription", async (req, res) => {
-  var today = new Date();
-  var day = today.getDate() + "";
-  var month = today.getMonth() + 1 + "";
-  var year = today.getFullYear() + "";
-  var hour = today.getHours() + "";
-  var minutes = today.getMinutes() + "";
-  var seconds = today.getSeconds() + "";
-
-  day = checkZero(day);
-  month = checkZero(month);
-  year = checkZero(year);
-  hour = checkZero(hour);
-  minutes = checkZero(minutes);
-  seconds = checkZero(seconds);
-
-  const date =
-    day + "/" + month + "/" + year + " " + hour + ":" + minutes + ":" + seconds;
-
-  function checkZero(data) {
-    if (data.length == 1) {
-      data = "0" + data;
-    }
-    return data;
-  }
-  const { email } = req.body;
-  const transactionQuerry = `INSERT INTO transactions (amount, user_email,date,transaction_info_en,transaction_info_ge) VALUES (?, ?, ?,?,?)`;
-  const updateQuery = `UPDATE users SET subscription=? WHERE email=?`;
-  const afterOneMonthQuerry = `UPDATE users SET subscription=? WHERE email=?`;
-  try {
-    const result = await queryDatabase(updateQuery, [1, email]);
-    if (result.affectedRows === 0) {
-      res.status(400).send("No user found or no changes made");
-    } else {
-      cron.schedule(
-        "0 0 1 * *",
-        () => {
-          queryDatabase(afterOneMonthQuerry, [0, email]);
-        },
-        {
-          scheduled: true,
-          timezone: "Asia/Tbilisi",
-        }
-      );
-      await queryDatabase(transactionQuerry, [
-        3,
-        email,
-        date,
-        "subscription",
-        "საბსქრიფშენი",
-      ]);
-      res.send("Updated successfully");
-    }
-  } catch (error) {
-    res.status(400).send("Failed to update payment status");
-  }
-});
-
 fromAdminRouter.post("/registration", async (req, res) => {
   try {
     const today = new Date();

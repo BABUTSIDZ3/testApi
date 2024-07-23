@@ -86,4 +86,52 @@ usersRouter.get("/", async (req, res) => {
   res.send(data);
 });
 
+usersRouter.post("/subscription", async (req, res) => {
+  const {email,language}=req.body
+  const userQuerry = `SELECT balance FROM users WHERE email=?`
+  const user = await queryDatabase(userQuerry,[email])
+  if (user.balance<3){
+res
+  .status(403)
+  .send(
+    language == "EN"
+      ? "You don't have enough money to continue your subscription"
+      : "თქვენ არ გაქვთ საკმარისი თანხა გამოწერის გასაგრძელებლად"
+  );
+  }else{
+    const updatequerry= `UPDATE users SET subscription=? WHERE email=?`
+    await queryDatabase(updatequerry,[email])
+    res.send(
+      language == "EN"
+        ? "You have successfully continued your subscription"
+        : "თქვენ წარმატებით გააგრძელეთ გამოწერა"
+    );
+  }
+});
+
+usersRouter('/on-auto-sub',async(req,res)=>{
+  const {email,language} =req.body
+   const updatequerry = `UPDATE users SET autosub=? WHERE email=?`;
+   await queryDatabase(updatequerry, [1,email])
+res.send(
+  language == "EN"
+    ? "Automatic subscription has been successfully enabled"
+    : "წარმატებით ჩაირთო ავტომატური გამოწერა"
+);
+})
+
+
+usersRouter("/off-auto-sub", async (req, res) => {
+  const { email, language } = req.body;
+  const updatequerry = `UPDATE users SET autosub=? WHERE email=?`;
+  await queryDatabase(updatequerry, [0, email]);
+  res.send(
+    language == "EN"
+      ? "You have successfully turned off auto-subscription"
+      : "წარმატებით გამოირთო ავტომატური გამოწერა"
+  );
+});
+
+
+
 export default usersRouter;
