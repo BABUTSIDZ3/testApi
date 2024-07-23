@@ -95,12 +95,12 @@ res
   .status(403)
   .send(
     language == "EN"
-      ? "You don't have enough money to continue your subscription"
+      ? "You don't have enough balance to continue your subscription"
       : "თქვენ არ გაქვთ საკმარისი თანხა გამოწერის გასაგრძელებლად"
   );
   }else{
-    const updatequerry= `UPDATE users SET subscription=? WHERE email=?`
-    await queryDatabase(updatequerry,[email])
+    const updatequerry = `UPDATE users SET subscription=?,balance=? WHERE email=?`;
+    await queryDatabase(updatequerry, [1, user.balance-3, email]);
     res.send(
       language == "EN"
         ? "You have successfully continued your subscription"
