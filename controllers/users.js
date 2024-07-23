@@ -109,7 +109,7 @@ res
   }
 });
 
-usersRouter('/on-auto-sub',async(req,res)=>{
+usersRouter.post('/on-auto-sub',async(req,res)=>{
   const {email,language} =req.body
    const updatequerry = `UPDATE users SET autosub=? WHERE email=?`;
    await queryDatabase(updatequerry, [1,email])
@@ -121,7 +121,7 @@ res.send(
 })
 
 
-usersRouter("/off-auto-sub", async (req, res) => {
+usersRouter.post("/off-auto-sub", async (req, res) => {
   const { email, language } = req.body;
   const updatequerry = `UPDATE users SET autosub=? WHERE email=?`;
   await queryDatabase(updatequerry, [0, email]);
